@@ -82,20 +82,10 @@ const MapView = ({
     }
   };
 
-  return (
-    <div className={`w-full ${height} relative`}>
-      {error && (
-        <div className="absolute top-4 right-4 z-10 bg-white p-2 rounded-md shadow-md text-sm text-red-600">
-          {error}
-        </div>
-      )}
-      {/* Key is added to force remount when center changes */}
-      <MapContainer 
-        key={`${mapCenter.lat}-${mapCenter.lng}`}
-        center={[mapCenter.lat, mapCenter.lng]} 
-        zoom={13} 
-        style={{ height: '100%', width: '100%' }}
-      >
+  // Create map elements before rendering to avoid context issues
+  const renderMapElements = () => {
+    return (
+      <>
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -128,6 +118,26 @@ const MapView = ({
         
         {/* Update view when location changes */}
         <SetViewOnChange coords={mapCenter} />
+      </>
+    );
+  };
+
+  return (
+    <div className={`w-full ${height} relative`}>
+      {error && (
+        <div className="absolute top-4 right-4 z-10 bg-white p-2 rounded-md shadow-md text-sm text-red-600">
+          {error}
+        </div>
+      )}
+      
+      {/* Key is added to force remount when center changes */}
+      <MapContainer 
+        key={`${mapCenter.lat.toFixed(4)}-${mapCenter.lng.toFixed(4)}`}
+        center={[mapCenter.lat, mapCenter.lng]} 
+        zoom={13} 
+        style={{ height: '100%', width: '100%' }}
+      >
+        {renderMapElements()}
       </MapContainer>
     </div>
   );
