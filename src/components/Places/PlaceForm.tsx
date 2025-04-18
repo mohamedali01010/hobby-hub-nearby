@@ -28,6 +28,9 @@ import { useGeolocation } from '@/hooks/useGeolocation';
 import { toast } from '@/components/ui/use-toast';
 import { MarkerType } from '../Map/MapMarker';
 
+// Import the Location interface from MapMarker to ensure consistency
+import { Location } from '../Map/MapMarker';
+
 // Form schema
 const placeFormSchema = z.object({
   title: z.string().min(3, {
@@ -86,9 +89,9 @@ const PlaceForm = ({ onSubmit, initialData }: PlaceFormProps) => {
   const handleFormSubmit = (data: PlaceFormValues) => {
     try {
       // Prepare location data
-      let locationData = {
-        lat: data.latitude,
-        lng: data.longitude,
+      let locationData: Location = {
+        lat: data.latitude || 0,
+        lng: data.longitude || 0,
       };
       
       // Use current location if selected
@@ -101,15 +104,15 @@ const PlaceForm = ({ onSubmit, initialData }: PlaceFormProps) => {
       
       // Add optional location details
       if (data.buildingName) {
-        locationData = { ...locationData, buildingName: data.buildingName };
+        locationData.buildingName = data.buildingName;
       }
       
       if (data.floor) {
-        locationData = { ...locationData, floor: data.floor };
+        locationData.floor = data.floor;
       }
       
       if (data.unit) {
-        locationData = { ...locationData, unit: data.unit };
+        locationData.unit = data.unit;
       }
       
       // Prepare full data object
