@@ -82,45 +82,43 @@ const MapView = ({
     }
   };
 
-  // Create map elements before rendering to avoid context issues
-  const renderMapElements = () => {
-    return (
-      <>
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+  // Create a stable map center key to avoid unnecessary remounts
+  const mapKey = `${mapCenter.lat.toFixed(4)}-${mapCenter.lng.toFixed(4)}`;
+
+  // Define map content components separately to avoid context issues
+  const MapContent = () => (
+    <>
+      <TileLayer
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+      />
+      
+      {location && (
+        <Marker 
+          position={[location.lat, location.lng]}
+          icon={defaultIcon}
+        >
+          <Popup>
+            <div>
+              <p className="font-medium">Your current location</p>
+              <p className="text-xs text-gray-500">Lat: {location.lat.toFixed(4)}, Lng: {location.lng.toFixed(4)}</p>
+            </div>
+          </Popup>
+        </Marker>
+      )}
+      
+      {events.map((event) => (
+        <MapMarker 
+          key={event.id}
+          event={event}
+          onClick={() => handleMarkerClick(event)}
+          isSelected={selectedEvent?.id === event.id}
         />
-        
-        {/* User's current location marker */}
-        {location && (
-          <Marker 
-            position={[location.lat, location.lng]}
-            icon={defaultIcon}
-          >
-            <Popup>
-              <div>
-                <p className="font-medium">Your current location</p>
-                <p className="text-xs text-gray-500">Lat: {location.lat.toFixed(4)}, Lng: {location.lng.toFixed(4)}</p>
-              </div>
-            </Popup>
-          </Marker>
-        )}
-        
-        {/* Event markers */}
-        {events.map((event) => (
-          <MapMarker 
-            key={event.id}
-            event={event}
-            onClick={() => handleMarkerClick(event)}
-            isSelected={selectedEvent?.id === event.id}
-          />
-        ))}
-        
-        {/* Update view when location changes */}
-        <SetViewOnChange coords={mapCenter} />
-      </>
-    );
-  };
+      ))}
+      
+      <SetViewOnChange coords={mapCenter} />
+    </>
+  );
 
   return (
     <div className={`w-full ${height} relative`}>
@@ -130,14 +128,13 @@ const MapView = ({
         </div>
       )}
       
-      {/* Key is added to force remount when center changes */}
       <MapContainer 
-        key={`${mapCenter.lat.toFixed(4)}-${mapCenter.lng.toFixed(4)}`}
+        key={mapKey}
         center={[mapCenter.lat, mapCenter.lng]} 
         zoom={13} 
         style={{ height: '100%', width: '100%' }}
       >
-        {renderMapElements()}
+        <MapContent />
       </MapContainer>
     </div>
   );
