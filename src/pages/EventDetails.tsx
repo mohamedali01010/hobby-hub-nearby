@@ -14,7 +14,7 @@ import HobbyTag from '@/components/UI/HobbyTag';
 const eventData = {
   id: '1',
   title: 'Sunday Football Match',
-  description: 'Join us for a casual 5v5 football match at the local park. All skill levels are welcome! We'll play for about 2 hours and maybe grab some drinks afterwards. Don\'t forget to bring water and appropriate footwear. In case of rain, we'll reschedule through the group chat.',
+  description: 'Join us for a casual 5v5 football match at the local park. All skill levels are welcome! We\'ll play for about 2 hours and maybe grab some drinks afterwards. Don\'t forget to bring water and appropriate footwear. In case of rain, we\'ll reschedule through the group chat.',
   hobby: 'Football',
   hobbyType: 'sports' as const,
   date: '2025-04-20T14:00:00Z',
@@ -72,7 +72,7 @@ const eventData = {
         name: 'John Doe',
         avatar: 'https://i.pravatar.cc/300?img=1'
       },
-      text: 'I'll bring a ball, but feel free to bring one as backup!',
+      text: 'I\'ll bring a ball, but feel free to bring one as backup!',
       timestamp: '2025-04-18T11:15:00Z'
     }
   ],
