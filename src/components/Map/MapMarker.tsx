@@ -61,7 +61,6 @@ const MapMarker = ({ event, onClick, isSelected = false }: MapMarkerProps) => {
       eventHandlers={{
         click: onClick
       }}
-      className={isSelected ? "marker-bounce" : ""}
     >
       <Popup>
         <div className="min-w-[200px] p-1">
