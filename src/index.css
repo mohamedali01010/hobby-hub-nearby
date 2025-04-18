@@ -90,6 +90,27 @@
   .hobby-food {
     @apply bg-red-500;
   }
+  
+  .hobby-other {
+    @apply bg-gray-500;
+  }
+
+  /* Place type colors */
+  .place-myPlace {
+    @apply bg-blue-500;
+  }
+  
+  .place-publicPlace {
+    @apply bg-amber-500;
+  }
+  
+  .place-property {
+    @apply bg-green-500;
+  }
+  
+  .place-donation {
+    @apply bg-purple-500;
+  }
 
   /* Map marker animations */
   @keyframes marker-bounce {
@@ -103,6 +124,20 @@
   
   .marker-bounce {
     animation: marker-bounce 0.6s ease-in-out;
+  }
+  
+  /* Enhanced marker glow effect */
+  @keyframes marker-glow {
+    0%, 100% {
+      filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.7));
+    }
+    50% {
+      filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.9));
+    }
+  }
+  
+  .marker-enhanced {
+    animation: marker-glow 2s infinite;
   }
   
   /* Card hover effects */

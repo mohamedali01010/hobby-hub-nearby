@@ -4,7 +4,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Icon } from 'leaflet';
 import { useGeolocation } from '@/hooks/useGeolocation';
-import MapMarker from './MapMarker';
+import MapMarker, { Event, Place, MapMarkerItem } from './MapMarker';
 
 // Fix for default marker icons in Leaflet with Webpack/Vite
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
@@ -21,17 +21,9 @@ const defaultIcon = new Icon({
 interface Location {
   lat: number;
   lng: number;
-}
-
-interface Event {
-  id: string;
-  title: string;
-  description: string;
-  location: Location;
-  hobby: string;
-  hobbyType: 'sports' | 'arts' | 'music' | 'tech' | 'outdoors' | 'food' | 'other';
-  date: string;
-  attendees: number;
+  floor?: number;
+  unit?: string;
+  buildingName?: string;
 }
 
 // Component to update map view when location changes
@@ -47,21 +39,29 @@ const SetViewOnChange = ({ coords }: { coords: Location }) => {
   return null;
 };
 
-interface MapViewProps {
+export interface MapViewProps {
   events?: Event[];
-  onMarkerClick?: (event: Event) => void;
+  places?: Place[];
+  onMarkerClick?: (item: MapMarkerItem) => void;
   height?: string;
   showControls?: boolean;
+  filterHobby?: string;
+  filterType?: string;
+  filterDistance?: number;
 }
 
 const MapView = ({ 
   events = [], 
+  places = [],
   onMarkerClick, 
   height = "h-[calc(100vh-4rem)]",
-  showControls = true 
+  showControls = true,
+  filterHobby,
+  filterType,
+  filterDistance
 }: MapViewProps) => {
   const { location, error } = useGeolocation();
-  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [selectedItem, setSelectedItem] = useState<MapMarkerItem | null>(null);
   
   // Default location (New York City) until geolocation is available
   const [mapCenter, setMapCenter] = useState<Location>({
@@ -69,16 +69,67 @@ const MapView = ({
     lng: -74.006
   });
 
+  // Apply filters to events and places
+  const filteredEvents = events.filter(event => {
+    // Filter by hobby if specified
+    if (filterHobby && filterHobby !== 'All' && event.hobby !== filterHobby) {
+      return false;
+    }
+    
+    // Filter by type (only show events if type is 'All' or 'Event')
+    if (filterType && filterType !== 'All' && filterType !== 'event') {
+      return false;
+    }
+    
+    // Filter by distance if location is available and distance is specified
+    if (location && filterDistance && calculateDistance(location, event.location) > filterDistance) {
+      return false;
+    }
+    
+    return true;
+  });
+  
+  const filteredPlaces = places.filter(place => {
+    // Filter by type if specified
+    if (filterType && filterType !== 'All' && place.type !== filterType) {
+      return false;
+    }
+    
+    // Filter by distance if location is available and distance is specified
+    if (location && filterDistance && calculateDistance(location, place.location) > filterDistance) {
+      return false;
+    }
+    
+    return true;
+  });
+  
+  // Helper to calculate distance in kilometers
+  const calculateDistance = (point1: Location, point2: Location): number => {
+    const R = 6371; // Earth's radius in km
+    const dLat = toRad(point2.lat - point1.lat);
+    const dLon = toRad(point2.lng - point1.lng);
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(toRad(point1.lat)) * Math.cos(toRad(point2.lat)) * 
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  };
+  
+  const toRad = (value: number): number => {
+    return value * Math.PI / 180;
+  };
+
   useEffect(() => {
     if (location) {
       setMapCenter(location);
     }
   }, [location]);
 
-  const handleMarkerClick = (event: Event) => {
-    setSelectedEvent(event);
+  const handleMarkerClick = (item: MapMarkerItem) => {
+    setSelectedItem(item);
     if (onMarkerClick) {
-      onMarkerClick(event);
+      onMarkerClick(item);
     }
   };
 
@@ -107,12 +158,23 @@ const MapView = ({
         </Marker>
       )}
       
-      {events.map((event) => (
+      {/* Render events as markers */}
+      {filteredEvents.map((event) => (
         <MapMarker 
-          key={event.id}
-          event={event}
+          key={`event-${event.id}`}
+          item={event}
           onClick={() => handleMarkerClick(event)}
-          isSelected={selectedEvent?.id === event.id}
+          isSelected={selectedItem && 'hobby' in selectedItem && selectedItem.id === event.id}
+        />
+      ))}
+      
+      {/* Render places as markers */}
+      {filteredPlaces.map((place) => (
+        <MapMarker 
+          key={`place-${place.id}`}
+          item={place}
+          onClick={() => handleMarkerClick(place)}
+          isSelected={selectedItem && !('hobby' in selectedItem) && selectedItem.id === place.id}
         />
       ))}
       
