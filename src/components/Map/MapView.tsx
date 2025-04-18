@@ -89,7 +89,9 @@ const MapView = ({
           {error}
         </div>
       )}
+      {/* Key is added to force remount when center changes */}
       <MapContainer 
+        key={`${mapCenter.lat}-${mapCenter.lng}`}
         center={[mapCenter.lat, mapCenter.lng]} 
         zoom={13} 
         style={{ height: '100%', width: '100%' }}
