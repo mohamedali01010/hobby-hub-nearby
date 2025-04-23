@@ -39,6 +39,65 @@ const SetViewOnChange = ({ coords }: { coords: Location }) => {
   return null;
 };
 
+// Define MapContent as a separate component outside the main MapView component
+// to avoid closure issues with React context
+const MapContent = ({ 
+  events, 
+  places, 
+  location, 
+  selectedItem, 
+  handleMarkerClick
+}: {
+  events: Event[];
+  places: Place[];
+  location: Location | null;
+  selectedItem: MapMarkerItem | null;
+  handleMarkerClick: (item: MapMarkerItem) => void;
+}) => {
+  return (
+    <>
+      <TileLayer
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+      />
+      
+      {location && (
+        <Marker 
+          position={[location.lat, location.lng]}
+          icon={defaultIcon}
+        >
+          <Popup>
+            <div>
+              <p className="font-medium">Your current location</p>
+              <p className="text-xs text-gray-500">Lat: {location.lat.toFixed(4)}, Lng: {location.lng.toFixed(4)}</p>
+            </div>
+          </Popup>
+        </Marker>
+      )}
+      
+      {/* Render events as markers */}
+      {events.map((event) => (
+        <MapMarker 
+          key={`event-${event.id}`}
+          item={event}
+          onClick={() => handleMarkerClick(event)}
+          isSelected={selectedItem && 'hobby' in selectedItem && selectedItem.id === event.id}
+        />
+      ))}
+      
+      {/* Render places as markers */}
+      {places.map((place) => (
+        <MapMarker 
+          key={`place-${place.id}`}
+          item={place}
+          onClick={() => handleMarkerClick(place)}
+          isSelected={selectedItem && !('hobby' in selectedItem) && selectedItem.id === place.id}
+        />
+      ))}
+    </>
+  );
+};
+
 export interface MapViewProps {
   events?: Event[];
   places?: Place[];
@@ -136,52 +195,6 @@ const MapView = ({
   // Create a stable map center key to avoid unnecessary remounts
   const mapKey = `${mapCenter.lat.toFixed(4)}-${mapCenter.lng.toFixed(4)}`;
 
-  // Define map content components separately to avoid context issues
-  const MapContent = () => (
-    <>
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
-      
-      {location && (
-        <Marker 
-          position={[location.lat, location.lng]}
-          icon={defaultIcon}
-        >
-          <Popup>
-            <div>
-              <p className="font-medium">Your current location</p>
-              <p className="text-xs text-gray-500">Lat: {location.lat.toFixed(4)}, Lng: {location.lng.toFixed(4)}</p>
-            </div>
-          </Popup>
-        </Marker>
-      )}
-      
-      {/* Render events as markers */}
-      {filteredEvents.map((event) => (
-        <MapMarker 
-          key={`event-${event.id}`}
-          item={event}
-          onClick={() => handleMarkerClick(event)}
-          isSelected={selectedItem && 'hobby' in selectedItem && selectedItem.id === event.id}
-        />
-      ))}
-      
-      {/* Render places as markers */}
-      {filteredPlaces.map((place) => (
-        <MapMarker 
-          key={`place-${place.id}`}
-          item={place}
-          onClick={() => handleMarkerClick(place)}
-          isSelected={selectedItem && !('hobby' in selectedItem) && selectedItem.id === place.id}
-        />
-      ))}
-      
-      <SetViewOnChange coords={mapCenter} />
-    </>
-  );
-
   return (
     <div className={`w-full ${height} relative`}>
       {error && (
@@ -196,7 +209,14 @@ const MapView = ({
         zoom={13} 
         style={{ height: '100%', width: '100%' }}
       >
-        <MapContent />
+        <MapContent 
+          events={filteredEvents} 
+          places={filteredPlaces} 
+          location={location} 
+          selectedItem={selectedItem}
+          handleMarkerClick={handleMarkerClick}
+        />
+        <SetViewOnChange coords={mapCenter} />
       </MapContainer>
     </div>
   );
