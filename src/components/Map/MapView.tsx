@@ -144,7 +144,8 @@ const MapView = ({
 
   // This component is now defined separately to avoid using react-leaflet hooks outside of MapContainer
   const MapContent = () => {
-    const map = L.useMap();
+    // Correctly use the useMap hook imported directly from react-leaflet
+    const map = useMap();
     
     // Update map view when center changes
     useEffect(() => {
