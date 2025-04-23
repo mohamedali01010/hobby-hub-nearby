@@ -41,8 +41,6 @@ const SetViewOnChange = ({ coords }: { coords: Location }) => {
 
 // Component for current location marker
 const CurrentLocationMarker = ({ location }: { location: Location | null }) => {
-  const map = useMap();
-  
   if (!location) return null;
   
   return (
@@ -57,54 +55,6 @@ const CurrentLocationMarker = ({ location }: { location: Location | null }) => {
         </div>
       </Popup>
     </Marker>
-  );
-};
-
-// Components for events markers
-const EventMarkers = ({ 
-  events, 
-  selectedItem, 
-  handleMarkerClick 
-}: { 
-  events: Event[]; 
-  selectedItem: MapMarkerItem | null;
-  handleMarkerClick: (item: MapMarkerItem) => void;
-}) => {
-  return (
-    <>
-      {events.map((event) => (
-        <MapMarker 
-          key={`event-${event.id}`}
-          item={event}
-          onClick={() => handleMarkerClick(event)}
-          isSelected={selectedItem && 'hobby' in selectedItem && selectedItem.id === event.id}
-        />
-      ))}
-    </>
-  );
-};
-
-// Components for places markers
-const PlaceMarkers = ({ 
-  places, 
-  selectedItem, 
-  handleMarkerClick 
-}: { 
-  places: Place[]; 
-  selectedItem: MapMarkerItem | null;
-  handleMarkerClick: (item: MapMarkerItem) => void;
-}) => {
-  return (
-    <>
-      {places.map((place) => (
-        <MapMarker 
-          key={`place-${place.id}`}
-          item={place}
-          onClick={() => handleMarkerClick(place)}
-          isSelected={selectedItem && !('hobby' in selectedItem) && selectedItem.id === place.id}
-        />
-      ))}
-    </>
   );
 };
 
@@ -215,22 +165,37 @@ const MapView = ({
         zoom={13} 
         style={{ height: '100%', width: '100%' }}
       >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        <CurrentLocationMarker location={location} />
-        <EventMarkers 
-          events={filteredEvents}
-          selectedItem={selectedItem}
-          handleMarkerClick={handleMarkerClick}
-        />
-        <PlaceMarkers 
-          places={filteredPlaces}
-          selectedItem={selectedItem}
-          handleMarkerClick={handleMarkerClick}
-        />
-        <SetViewOnChange coords={mapCenter} />
+        {(map) => (
+          <>
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            <CurrentLocationMarker location={location} />
+            
+            {/* Render Event Markers */}
+            {filteredEvents.map((event) => (
+              <MapMarker 
+                key={`event-${event.id}`}
+                item={event}
+                onClick={() => handleMarkerClick(event)}
+                isSelected={selectedItem && 'hobby' in selectedItem && selectedItem.id === event.id}
+              />
+            ))}
+            
+            {/* Render Place Markers */}
+            {filteredPlaces.map((place) => (
+              <MapMarker 
+                key={`place-${place.id}`}
+                item={place}
+                onClick={() => handleMarkerClick(place)}
+                isSelected={selectedItem && !('hobby' in selectedItem) && selectedItem.id === place.id}
+              />
+            ))}
+            
+            <SetViewOnChange coords={mapCenter} />
+          </>
+        )}
       </MapContainer>
     </div>
   );
