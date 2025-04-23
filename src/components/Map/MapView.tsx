@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Icon } from 'leaflet';
 import { useGeolocation } from '@/hooks/useGeolocation';
@@ -28,13 +28,12 @@ interface Location {
 
 // Component to update map view when location changes
 const SetViewOnChange = ({ coords }: { coords: Location }) => {
-  const map = useMap();
-  
   useEffect(() => {
-    if (coords) {
+    const map = document.querySelector('.leaflet-container')?._leaflet_map;
+    if (map && coords) {
       map.setView([coords.lat, coords.lng], map.getZoom());
     }
-  }, [coords, map]);
+  }, [coords]);
   
   return null;
 };
@@ -211,26 +210,22 @@ const MapView = ({
         zoom={13} 
         style={{ height: '100%', width: '100%' }}
       >
-        {({ map, layerContainer }) => (
-          <>
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-            <LocationMarker location={location} />
-            <EventMarkersLayer 
-              events={filteredEvents}
-              selectedItem={selectedItem}
-              handleMarkerClick={handleMarkerClick}
-            />
-            <PlaceMarkersLayer 
-              places={filteredPlaces}
-              selectedItem={selectedItem}
-              handleMarkerClick={handleMarkerClick}
-            />
-            <SetViewOnChange coords={mapCenter} />
-          </>
-        )}
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
+        <LocationMarker location={location} />
+        <EventMarkersLayer 
+          events={filteredEvents}
+          selectedItem={selectedItem}
+          handleMarkerClick={handleMarkerClick}
+        />
+        <PlaceMarkersLayer 
+          places={filteredPlaces}
+          selectedItem={selectedItem}
+          handleMarkerClick={handleMarkerClick}
+        />
+        <SetViewOnChange coords={mapCenter} />
       </MapContainer>
     </div>
   );

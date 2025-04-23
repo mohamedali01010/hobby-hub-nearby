@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -15,8 +14,9 @@ import HobbyTag from '@/components/UI/HobbyTag';
 import { useAuth } from '@/context/AuthContext';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useToast } from '@/hooks/use-toast';
 
-// Sample event data
+// Sample event data with specialized event types
 const sampleEvents = [
   {
     id: '1',
@@ -27,6 +27,12 @@ const sampleEvents = [
     hobbyType: 'sports' as const,
     date: '2025-04-20T14:00:00Z',
     attendees: 8,
+    eventType: 'football' as const,
+    photos: [
+      'https://images.unsplash.com/photo-1517466787929-bc90951d0974?q=80&w=2533',
+      'https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=2576'
+    ],
+    videos: ['https://example.com/football-video.mp4']
   },
   {
     id: '2',
@@ -37,16 +43,26 @@ const sampleEvents = [
     hobbyType: 'arts' as const,
     date: '2025-04-19T10:00:00Z',
     attendees: 5,
+    photos: [
+      'https://images.unsplash.com/photo-1554080353-a576cf803bda?q=80&w=2187',
+      'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?q=80&w=2370'
+    ]
   },
   {
     id: '3',
-    title: 'Guitar Jam Session',
-    description: 'Bring your guitar and join us for an evening of music and fun!',
+    title: 'Swimming Class for Beginners',
+    description: 'Learn swimming basics in a friendly environment. All equipment provided.',
     location: { lat: 51.503, lng: -0.11 },
-    hobby: 'Guitar',
-    hobbyType: 'music' as const,
+    hobby: 'Swimming',
+    hobbyType: 'sports' as const,
     date: '2025-04-21T18:00:00Z',
-    attendees: 4,
+    attendees: 6,
+    eventType: 'swimming' as const,
+    photos: [
+      'https://images.unsplash.com/photo-1560090995-01632a28895b?q=80&w=2594',
+      'https://images.unsplash.com/photo-1551958219-acbc608c6377?q=80&w=2940'
+    ],
+    videos: ['https://example.com/swimming-tips.mp4']
   },
   {
     id: '4',
@@ -57,6 +73,26 @@ const sampleEvents = [
     hobbyType: 'tech' as const,
     date: '2025-04-22T17:00:00Z',
     attendees: 12,
+    photos: [
+      'https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=2944',
+      'https://images.unsplash.com/photo-1555099962-4199c345e5dd?q=80&w=2940'
+    ]
+  },
+  {
+    id: '5',
+    title: 'Apartment Viewing - Central London',
+    description: 'Open house for a modern 2-bedroom apartment in central London.',
+    location: { lat: 51.515, lng: -0.09 },
+    hobby: 'Property',
+    hobbyType: 'other' as const,
+    date: '2025-04-25T14:00:00Z',
+    attendees: 3,
+    eventType: 'rent' as const,
+    photos: [
+      'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=2940',
+      'https://images.unsplash.com/photo-1581858726788-75bc0f6a952d?q=80&w=2787'
+    ],
+    videos: ['https://example.com/apartment-tour.mp4']
   },
 ];
 
@@ -103,17 +139,19 @@ const sampleUsers = [
   },
 ];
 
-// Available hobby filters
+// Available hobby filters - adding swimming and property
 const hobbyFilters = [
   { name: 'All', type: 'all' as const },
   { name: 'Football', type: 'sports' as const },
   { name: 'Basketball', type: 'sports' as const },
+  { name: 'Swimming', type: 'sports' as const },
   { name: 'Photography', type: 'arts' as const },
   { name: 'Painting', type: 'arts' as const },
   { name: 'Guitar', type: 'music' as const },
   { name: 'Programming', type: 'tech' as const },
   { name: 'Hiking', type: 'outdoors' as const },
   { name: 'Cooking', type: 'food' as const },
+  { name: 'Property', type: 'other' as const },
 ];
 
 const Dashboard = () => {
@@ -121,6 +159,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { location } = useGeolocation();
   const isMobile = useIsMobile();
+  const { toast } = useToast();
   
   const [activeTab, setActiveTab] = useState('events');
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
@@ -178,6 +217,23 @@ const Dashboard = () => {
     
     return true;
   });
+
+  const handleMarkerClick = (item: any) => {
+    // When a marker is clicked on the map
+    setSelectedEvent(item.id);
+    
+    if ('hobby' in item) {
+      toast({
+        title: item.title,
+        description: `${item.hobby} event on ${new Date(item.date).toLocaleDateString()}`,
+        action: (
+          <Button size="sm" variant="outline" onClick={() => navigate(`/events/${item.id}`)}>
+            View Details
+          </Button>
+        ),
+      });
+    }
+  };
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -347,7 +403,7 @@ const Dashboard = () => {
           <div className="absolute inset-0">
             <MapView 
               events={sampleEvents} 
-              onMarkerClick={(event) => setSelectedEvent(event.id)} 
+              onMarkerClick={handleMarkerClick} 
             />
           </div>
           
