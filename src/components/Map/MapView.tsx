@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Icon } from 'leaflet';
 import { useGeolocation } from '@/hooks/useGeolocation';
@@ -18,7 +18,7 @@ const defaultIcon = new Icon({
   popupAnchor: [1, -34],
 });
 
-interface Location {
+export interface Location {
   lat: number;
   lng: number;
   floor?: number;
@@ -28,18 +28,40 @@ interface Location {
 
 // Component to update map view when location changes
 const SetViewOnChange = ({ coords }: { coords: Location }) => {
+  const map = useMap();
+  
   useEffect(() => {
-    const map = document.querySelector('.leaflet-container')?._leaflet_map;
-    if (map && coords) {
+    if (coords) {
       map.setView([coords.lat, coords.lng], map.getZoom());
     }
-  }, [coords]);
+  }, [coords, map]);
   
   return null;
 };
 
-// Components for map markers - using function children pattern instead of JSX to avoid context issues
-const EventMarkersLayer = ({ 
+// Component for current location marker
+const CurrentLocationMarker = ({ location }: { location: Location | null }) => {
+  const map = useMap();
+  
+  if (!location) return null;
+  
+  return (
+    <Marker 
+      position={[location.lat, location.lng]}
+      icon={defaultIcon}
+    >
+      <Popup>
+        <div>
+          <p className="font-medium">Your current location</p>
+          <p className="text-xs text-gray-500">Lat: {location.lat.toFixed(4)}, Lng: {location.lng.toFixed(4)}</p>
+        </div>
+      </Popup>
+    </Marker>
+  );
+};
+
+// Components for events markers
+const EventMarkers = ({ 
   events, 
   selectedItem, 
   handleMarkerClick 
@@ -62,7 +84,8 @@ const EventMarkersLayer = ({
   );
 };
 
-const PlaceMarkersLayer = ({ 
+// Components for places markers
+const PlaceMarkers = ({ 
   places, 
   selectedItem, 
   handleMarkerClick 
@@ -82,24 +105,6 @@ const PlaceMarkersLayer = ({
         />
       ))}
     </>
-  );
-};
-
-const LocationMarker = ({ location }: { location: Location | null }) => {
-  if (!location) return null;
-  
-  return (
-    <Marker 
-      position={[location.lat, location.lng]}
-      icon={defaultIcon}
-    >
-      <Popup>
-        <div>
-          <p className="font-medium">Your current location</p>
-          <p className="text-xs text-gray-500">Lat: {location.lat.toFixed(4)}, Lng: {location.lng.toFixed(4)}</p>
-        </div>
-      </Popup>
-    </Marker>
   );
 };
 
@@ -214,13 +219,13 @@ const MapView = ({
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        <LocationMarker location={location} />
-        <EventMarkersLayer 
+        <CurrentLocationMarker location={location} />
+        <EventMarkers 
           events={filteredEvents}
           selectedItem={selectedItem}
           handleMarkerClick={handleMarkerClick}
         />
-        <PlaceMarkersLayer 
+        <PlaceMarkers 
           places={filteredPlaces}
           selectedItem={selectedItem}
           handleMarkerClick={handleMarkerClick}

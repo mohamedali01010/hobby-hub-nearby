@@ -96,6 +96,39 @@ const sampleEvents = [
   },
 ];
 
+// Sample places data
+const samplePlaces = [
+  {
+    id: 'p1',
+    title: 'Local Sports Center',
+    description: 'Multi-purpose sports facility with football fields, swimming pool, and gym.',
+    location: { lat: 51.508, lng: -0.11 },
+    type: 'publicPlace' as const,
+    isOwner: false
+  },
+  {
+    id: 'p2',
+    title: 'City Photography Studio',
+    description: 'Professional studio with equipment rental and workshop space.',
+    location: { lat: 51.502, lng: -0.09 },
+    type: 'publicPlace' as const,
+    isOwner: false
+  },
+  {
+    id: 'p3',
+    title: 'Central Apartment',
+    description: 'Modern 2-bedroom apartment near city center with great amenities.',
+    location: { lat: 51.515, lng: -0.09 },
+    type: 'property' as const,
+    isOwner: true,
+    price: 1500,
+    photos: [
+      'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=2940',
+      'https://images.unsplash.com/photo-1581858726788-75bc0f6a952d?q=80&w=2787'
+    ]
+  }
+];
+
 // Sample user data
 const sampleUsers = [
   {
@@ -139,7 +172,7 @@ const sampleUsers = [
   },
 ];
 
-// Available hobby filters - adding swimming and property
+// Available hobby filters
 const hobbyFilters = [
   { name: 'All', type: 'all' as const },
   { name: 'Football', type: 'sports' as const },
@@ -165,11 +198,12 @@ const Dashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedHobby, setSelectedHobby] = useState<string>('All');
+  const [placeType, setPlaceType] = useState<string>('All');
   const [maxDistance, setMaxDistance] = useState([10]); // km
   const [dateFilter, setDateFilter] = useState('all'); // all, today, tomorrow, this-week
   const [selectedEvent, setSelectedEvent] = useState<string | null>(null);
   
-  // Mock data manipulation based on filters
+  // Apply filters to events
   const filteredEvents = sampleEvents.filter(event => {
     // Apply hobby filter
     if (selectedHobby !== 'All' && event.hobby !== selectedHobby) return false;
@@ -203,6 +237,7 @@ const Dashboard = () => {
     return true;
   });
   
+  // Apply filters to users
   const filteredUsers = sampleUsers.filter(user => {
     // Apply hobby filter
     if (selectedHobby !== 'All' && !user.hobbies.some(h => h.name === selectedHobby)) return false;
@@ -328,6 +363,45 @@ const Dashboard = () => {
               </div>
             </div>
             
+            {/* Type Filter (only for places) */}
+            {activeTab === 'events' && (
+              <div>
+                <h3 className="text-sm font-medium mb-2">Place Type</h3>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    className={`px-3 py-1 text-xs rounded-full transition-all ${
+                      placeType === 'All' 
+                        ? "bg-primary text-white"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                    onClick={() => setPlaceType('All')}
+                  >
+                    All
+                  </button>
+                  <button
+                    className={`px-3 py-1 text-xs rounded-full transition-all ${
+                      placeType === 'event' 
+                        ? "bg-primary text-white"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                    onClick={() => setPlaceType('event')}
+                  >
+                    Events
+                  </button>
+                  <button
+                    className={`px-3 py-1 text-xs rounded-full transition-all ${
+                      placeType === 'property' 
+                        ? "bg-primary text-white"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                    onClick={() => setPlaceType('property')}
+                  >
+                    Properties
+                  </button>
+                </div>
+              </div>
+            )}
+            
             {/* Distance Slider */}
             <div>
               <div className="flex justify-between mb-2">
@@ -402,8 +476,12 @@ const Dashboard = () => {
           {/* Map Container */}
           <div className="absolute inset-0">
             <MapView 
-              events={sampleEvents} 
-              onMarkerClick={handleMarkerClick} 
+              events={filteredEvents}
+              places={samplePlaces} 
+              onMarkerClick={handleMarkerClick}
+              filterHobby={selectedHobby}
+              filterType={placeType}
+              filterDistance={maxDistance[0]} 
             />
           </div>
           

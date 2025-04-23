@@ -2,7 +2,7 @@
 import { Marker, Popup } from 'react-leaflet';
 import { Icon } from 'leaflet';
 import { Link } from 'react-router-dom';
-import { Users, Calendar, MapPin, Home, Store, Gift, Football, SwimmingPool, Building } from 'lucide-react';
+import { Users, Calendar, MapPin, Home, Store, Gift, Map, Activity } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
@@ -182,9 +182,9 @@ const MapMarker = ({ item, onClick, isSelected = false }: MapMarkerProps) => {
   
   // Get appropriate icon based on event type for popup
   const getEventIcon = (eventType?: EventType) => {
-    if (eventType === 'football') return <Football className="h-4 w-4 mr-2" />;
-    if (eventType === 'swimming') return <SwimmingPool className="h-4 w-4 mr-2" />;
-    if (eventType === 'rent') return <Building className="h-4 w-4 mr-2" />;
+    if (eventType === 'football') return <Activity className="h-4 w-4 mr-2" />;
+    if (eventType === 'swimming') return <Activity className="h-4 w-4 mr-2" />;
+    if (eventType === 'rent') return <Store className="h-4 w-4 mr-2" />;
     return <Calendar className="h-4 w-4 mr-2" />;
   };
   
@@ -201,7 +201,7 @@ const MapMarker = ({ item, onClick, isSelected = false }: MapMarkerProps) => {
           {/* Marker Type Badge */}
           <div className="flex justify-between items-center mb-2">
             {isEvent(item) ? (
-              <Badge variant="outline" className={`bg-hobby-${item.hobbyType} text-white`}>
+              <Badge variant="outline" className={`bg-primary text-white`}>
                 {item.hobby}
               </Badge>
             ) : (
