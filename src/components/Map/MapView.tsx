@@ -3,8 +3,10 @@ import { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Icon } from 'leaflet';
+import L from 'leaflet';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import MapMarker, { Event, Place, MapMarkerItem } from './MapMarker';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 // Fix for default marker icons in Leaflet with Webpack/Vite
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
@@ -25,19 +27,6 @@ export interface Location {
   unit?: string;
   buildingName?: string;
 }
-
-// Component to update map view when location changes
-const SetViewOnChange = ({ coords }: { coords: Location }) => {
-  const map = useMap();
-  
-  useEffect(() => {
-    if (coords) {
-      map.setView([coords.lat, coords.lng], map.getZoom());
-    }
-  }, [coords, map]);
-  
-  return null;
-};
 
 // Component for current location marker
 const CurrentLocationMarker = ({ location }: { location: Location | null }) => {
@@ -81,6 +70,7 @@ const MapView = ({
 }: MapViewProps) => {
   const { location, error } = useGeolocation();
   const [selectedItem, setSelectedItem] = useState<MapMarkerItem | null>(null);
+  const isMobile = useIsMobile();
   
   // Default location (New York City) until geolocation is available
   const [mapCenter, setMapCenter] = useState<Location>({
@@ -152,19 +142,17 @@ const MapView = ({
     }
   };
 
-  return (
-    <div className={`w-full ${height} relative`}>
-      {error && (
-        <div className="absolute top-4 right-4 z-10 bg-white p-2 rounded-md shadow-md text-sm text-red-600">
-          {error}
-        </div>
-      )}
-      
-      <MapContainer 
-        center={[mapCenter.lat, mapCenter.lng]} 
-        zoom={13} 
-        style={{ height: '100%', width: '100%' }}
-      >
+  // This component is now defined separately to avoid using react-leaflet hooks outside of MapContainer
+  const MapContent = () => {
+    const map = L.useMap();
+    
+    // Update map view when center changes
+    useEffect(() => {
+      map.setView([mapCenter.lat, mapCenter.lng], map.getZoom());
+    }, [mapCenter, map]);
+    
+    return (
+      <>
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -190,8 +178,24 @@ const MapView = ({
             isSelected={selectedItem && !('hobby' in selectedItem) && selectedItem.id === place.id}
           />
         ))}
-        
-        <SetViewOnChange coords={mapCenter} />
+      </>
+    );
+  };
+
+  return (
+    <div className={`w-full ${height} relative`}>
+      {error && (
+        <div className="absolute top-4 right-4 z-10 bg-white p-2 rounded-md shadow-md text-sm text-red-600">
+          {error}
+        </div>
+      )}
+      
+      <MapContainer 
+        center={[mapCenter.lat, mapCenter.lng]} 
+        zoom={13} 
+        style={{ height: '100%', width: '100%' }}
+      >
+        <MapContent />
       </MapContainer>
     </div>
   );
