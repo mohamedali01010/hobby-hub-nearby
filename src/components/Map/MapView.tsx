@@ -165,37 +165,33 @@ const MapView = ({
         zoom={13} 
         style={{ height: '100%', width: '100%' }}
       >
-        {(map) => (
-          <>
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-            <CurrentLocationMarker location={location} />
-            
-            {/* Render Event Markers */}
-            {filteredEvents.map((event) => (
-              <MapMarker 
-                key={`event-${event.id}`}
-                item={event}
-                onClick={() => handleMarkerClick(event)}
-                isSelected={selectedItem && 'hobby' in selectedItem && selectedItem.id === event.id}
-              />
-            ))}
-            
-            {/* Render Place Markers */}
-            {filteredPlaces.map((place) => (
-              <MapMarker 
-                key={`place-${place.id}`}
-                item={place}
-                onClick={() => handleMarkerClick(place)}
-                isSelected={selectedItem && !('hobby' in selectedItem) && selectedItem.id === place.id}
-              />
-            ))}
-            
-            <SetViewOnChange coords={mapCenter} />
-          </>
-        )}
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
+        <CurrentLocationMarker location={location} />
+        
+        {/* Render Event Markers */}
+        {filteredEvents.map((event) => (
+          <MapMarker 
+            key={`event-${event.id}`}
+            item={event}
+            onClick={() => handleMarkerClick(event)}
+            isSelected={selectedItem && 'hobby' in selectedItem && selectedItem.id === event.id}
+          />
+        ))}
+        
+        {/* Render Place Markers */}
+        {filteredPlaces.map((place) => (
+          <MapMarker 
+            key={`place-${place.id}`}
+            item={place}
+            onClick={() => handleMarkerClick(place)}
+            isSelected={selectedItem && !('hobby' in selectedItem) && selectedItem.id === place.id}
+          />
+        ))}
+        
+        <SetViewOnChange coords={mapCenter} />
       </MapContainer>
     </div>
   );
