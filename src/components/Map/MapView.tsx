@@ -39,8 +39,8 @@ const SetViewOnChange = ({ coords }: { coords: Location }) => {
   return null;
 };
 
-// Create separate components for the map content
-const EventMarkers = ({ 
+// Components for map markers - using function children pattern instead of JSX to avoid context issues
+const EventMarkersLayer = ({ 
   events, 
   selectedItem, 
   handleMarkerClick 
@@ -63,7 +63,7 @@ const EventMarkers = ({
   );
 };
 
-const PlaceMarkers = ({ 
+const PlaceMarkersLayer = ({ 
   places, 
   selectedItem, 
   handleMarkerClick 
@@ -86,7 +86,7 @@ const PlaceMarkers = ({
   );
 };
 
-const CurrentLocationMarker = ({ location }: { location: Location | null }) => {
+const LocationMarker = ({ location }: { location: Location | null }) => {
   if (!location) return null;
   
   return (
@@ -211,24 +211,26 @@ const MapView = ({
         zoom={13} 
         style={{ height: '100%', width: '100%' }}
       >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        
-        <CurrentLocationMarker location={location} />
-        <EventMarkers 
-          events={filteredEvents}
-          selectedItem={selectedItem}
-          handleMarkerClick={handleMarkerClick}
-        />
-        <PlaceMarkers 
-          places={filteredPlaces}
-          selectedItem={selectedItem}
-          handleMarkerClick={handleMarkerClick}
-        />
-        
-        <SetViewOnChange coords={mapCenter} />
+        {({ map, layerContainer }) => (
+          <>
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            <LocationMarker location={location} />
+            <EventMarkersLayer 
+              events={filteredEvents}
+              selectedItem={selectedItem}
+              handleMarkerClick={handleMarkerClick}
+            />
+            <PlaceMarkersLayer 
+              places={filteredPlaces}
+              selectedItem={selectedItem}
+              handleMarkerClick={handleMarkerClick}
+            />
+            <SetViewOnChange coords={mapCenter} />
+          </>
+        )}
       </MapContainer>
     </div>
   );
