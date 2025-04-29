@@ -56,6 +56,8 @@ export interface MapViewProps {
   filterHobby?: string;
   filterType?: string;
   filterDistance?: number;
+  filterCategory?: string;  // Added for places filtering (flat, restaurant, shop)
+  filterAction?: string;    // Added for places filtering (rent, sell, buy)
 }
 
 const MapView = ({ 
@@ -66,7 +68,9 @@ const MapView = ({
   showControls = true,
   filterHobby,
   filterType,
-  filterDistance
+  filterDistance,
+  filterCategory,
+  filterAction
 }: MapViewProps) => {
   const { location, error } = useGeolocation();
   const [selectedItem, setSelectedItem] = useState<MapMarkerItem | null>(null);
@@ -101,6 +105,16 @@ const MapView = ({
   const filteredPlaces = places.filter(place => {
     // Filter by type if specified
     if (filterType && filterType !== 'All' && place.type !== filterType) {
+      return false;
+    }
+    
+    // Filter by category if specified (flat, restaurant, shop)
+    if (filterCategory && filterCategory !== 'All' && place.category !== filterCategory) {
+      return false;
+    }
+    
+    // Filter by action if specified (rent, sell, buy)
+    if (filterAction && filterAction !== 'All' && place.action !== filterAction) {
       return false;
     }
     

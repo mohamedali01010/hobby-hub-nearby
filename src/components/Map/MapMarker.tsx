@@ -1,19 +1,24 @@
-
 import { Marker, Popup } from 'react-leaflet';
 import { Icon } from 'leaflet';
 import { Link } from 'react-router-dom';
-import { Users, Calendar, MapPin, Home, Store, Gift, Map, Activity } from 'lucide-react';
+import { Users, Calendar, MapPin, Home, Store, Gift, Map, Building, Restaurant, Shop } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
 // Define marker types
-export type MarkerType = 'event' | 'myPlace' | 'publicPlace' | 'property' | 'donation';
+export type MarkerType = 'event' | 'myPlace' | 'publicPlace' | 'property' | 'donation' | 'flat' | 'restaurant' | 'shop';
 
 // Define event types that will have special icons
 export type EventType = 'football' | 'swimming' | 'rent' | 'other';
 
+// Define place categories
+export type PlaceCategory = 'flat' | 'restaurant' | 'shop' | 'villa';
+
+// Define place actions
+export type PlaceAction = 'rent' | 'sell' | 'buy';
+
 // Create custom icons for different marker types
-const createMarkerIcon = (type: MarkerType | string, hobbyType: string = 'other', isSelected: boolean = false, isEnhanced: boolean = false, eventType?: EventType) => {
+const createMarkerIcon = (type: MarkerType | string, hobbyType: string = 'other', isSelected: boolean = false, isEnhanced: boolean = false, eventType?: EventType, category?: PlaceCategory) => {
   // Color mapping for different marker types
   const typeColorMap: Record<string, string> = {
     event: '#EF4444',      // Bright red for events
@@ -21,6 +26,10 @@ const createMarkerIcon = (type: MarkerType | string, hobbyType: string = 'other'
     publicPlace: '#F59E0B', // Yellow for public places
     property: '#10B981',   // Green for properties
     donation: '#8B5CF6',   // Purple for donations
+    flat: '#EC4899',       // Pink for flats
+    villa: '#8B5CF6',      // Purple for villas
+    restaurant: '#F59E0B', // Yellow for restaurants
+    shop: '#10B981',       // Green for shops
   };
   
   // Color mapping for different hobby types (used for event markers)
@@ -41,6 +50,14 @@ const createMarkerIcon = (type: MarkerType | string, hobbyType: string = 'other'
     rent: '#FEC6A1',       // soft orange
     other: '#9b87f5'       // purple
   };
+
+  // Category-specific colors
+  const categoryColorMap: Record<string, string> = {
+    flat: '#EC4899',       // Pink for flats
+    villa: '#8B5CF6',      // Purple for villas
+    restaurant: '#F59E0B', // Yellow for restaurants
+    shop: '#10B981',       // Green for shops
+  };
   
   // Determine base color
   let color;
@@ -48,6 +65,8 @@ const createMarkerIcon = (type: MarkerType | string, hobbyType: string = 'other'
     color = eventTypeColorMap[eventType] || eventTypeColorMap.other;
   } else if (type === 'event') {
     color = hobbyColorMap[hobbyType] || hobbyColorMap.other;
+  } else if (category) {
+    color = categoryColorMap[category] || typeColorMap[type];
   } else {
     color = typeColorMap[type] || typeColorMap.event;
   }
@@ -76,6 +95,24 @@ const createMarkerIcon = (type: MarkerType | string, hobbyType: string = 'other'
       // Default event icon
       svgPath = `<path fill="${color}" d="M16 0c-5.523 0-10 4.477-10 10 0 10 10 22 10 22s10-12 10-22c0-5.523-4.477-10-10-10zm0 16.5a6.5 6.5 0 1 1 0-13 6.5 6.5 0 0 1 0 13z"${enhancedEffect}/>`;
     }
+  } else if (category === 'flat' || type === 'flat') {
+    // Flat icon
+    svgPath = `<path fill="${color}" d="M3 32h26v10H3z"/><path fill="${color}" d="M16 0L1 15h5v17h20V15h5L16 0z"${enhancedEffect}/>`;
+  } else if (category === 'villa' || type === 'villa') {
+    // Villa icon
+    svgPath = `<path fill="${color}" d="M3 32h26v10H3z"/><path fill="${color}" d="M16 0L1 15h5v17h20V15h5L16 0z"${enhancedEffect}/>
+               <path fill="white" d="M10 20h12v12H10z"/>`;
+  } else if (category === 'restaurant' || type === 'restaurant') {
+    // Restaurant icon
+    svgPath = `<path fill="${color}" d="M16 0c-5.523 0-10 4.477-10 10 0 10 10 22 10 22s10-12 10-22c0-5.523-4.477-10-10-10zm0 16.5a6.5 6.5 0 1 1 0-13 6.5 6.5 0 0 1 0 13z"${enhancedEffect}/>
+               <path fill="white" d="M13 5v10c0 .6.4 1 1 1h1v-5h1v5h1v-5h1v5h1c.6 0 1-.4 1-1V5h-7z"/>
+               <path fill="white" d="M13 16v1c0 .6.4 1 1 1h4c.6 0 1-.4 1-1v-1h-6z"/>`;
+  } else if (category === 'shop' || type === 'shop') {
+    // Shop icon
+    svgPath = `<path fill="${color}" d="M16 0c-5.523 0-10 4.477-10 10 0 10 10 22 10 22s10-12 10-22c0-5.523-4.477-10-10-10zm0 16.5a6.5 6.5 0 1 1 0-13 6.5 6.5 0 0 1 0 13z"${enhancedEffect}/>
+               <path fill="white" d="M12 7v2h8V7h-8z"/>
+               <path fill="white" d="M20 9H12l-1 5h10l-1-5z"/>
+               <path fill="white" d="M19 14H13v3h6v-3z"/>`;
   } else if (type === 'event') {
     // Standard event icon
     svgPath = `<path fill="${color}" d="M16 0c-5.523 0-10 4.477-10 10 0 10 10 22 10 22s10-12 10-22c0-5.523-4.477-10-10-10zm0 16.5a6.5 6.5 0 1 1 0-13 6.5 6.5 0 0 1 0 13z"${enhancedEffect}/>`;
@@ -116,6 +153,28 @@ export interface Place {
   price?: number;
   photos?: string[];
   isEnhanced?: boolean;
+  category?: PlaceCategory;  // Added property
+  action?: PlaceAction;      // Added property
+  area?: number;             // Added property (in square meters/feet)
+  broker?: BrokerInfo;       // Added property for broker information
+  deliverer?: DelivererInfo; // Added property for deliverer information
+}
+
+export interface BrokerInfo {
+  id: string;
+  name: string;
+  rating: number;
+  commissionsRate: number;
+  photoUrl?: string;
+}
+
+export interface DelivererInfo {
+  id: string;
+  name: string;
+  rating: number;
+  deliveryFee: number;
+  photoUrl?: string;
+  deliveryArea?: string;
 }
 
 export interface Event {
@@ -169,6 +228,7 @@ const MapMarker = ({ item, onClick, isSelected = false }: MapMarkerProps) => {
   let hobbyType = 'other';
   const isEnhanced = 'isEnhanced' in item ? item.isEnhanced : false;
   let eventType: EventType | undefined;
+  let category: PlaceCategory | undefined;
   
   if (isEvent(item)) {
     markerType = 'event';
@@ -176,16 +236,40 @@ const MapMarker = ({ item, onClick, isSelected = false }: MapMarkerProps) => {
     eventType = item.eventType || getEventType(item);
   } else {
     markerType = item.type;
+    category = item.category;
   }
   
-  const icon = createMarkerIcon(markerType, hobbyType, isSelected, isEnhanced, eventType);
+  const icon = createMarkerIcon(markerType, hobbyType, isSelected, isEnhanced, eventType, category);
   
-  // Get appropriate icon based on event type for popup
-  const getEventIcon = (eventType?: EventType) => {
-    if (eventType === 'football') return <Activity className="h-4 w-4 mr-2" />;
-    if (eventType === 'swimming') return <Activity className="h-4 w-4 mr-2" />;
-    if (eventType === 'rent') return <Store className="h-4 w-4 mr-2" />;
-    return <Calendar className="h-4 w-4 mr-2" />;
+  // Get appropriate icon based on event type or place category for popup
+  const getIcon = () => {
+    if (isEvent(item)) {
+      if (item.eventType === 'football') return <Calendar className="h-4 w-4 mr-2" />;
+      if (item.eventType === 'swimming') return <Calendar className="h-4 w-4 mr-2" />;
+      if (item.eventType === 'rent') return <Calendar className="h-4 w-4 mr-2" />;
+      return <Calendar className="h-4 w-4 mr-2" />;
+    } else {
+      if (item.category === 'flat') return <Building className="h-4 w-4 mr-2" />;
+      if (item.category === 'villa') return <Home className="h-4 w-4 mr-2" />;
+      if (item.category === 'restaurant') return <Restaurant className="h-4 w-4 mr-2" />;
+      if (item.category === 'shop') return <Shop className="h-4 w-4 mr-2" />;
+      
+      if (item.type === 'myPlace') return <Home className="h-4 w-4 mr-2" />;
+      if (item.type === 'property') return <Building className="h-4 w-4 mr-2" />;
+      if (item.type === 'donation') return <Gift className="h-4 w-4 mr-2" />;
+      
+      return <MapPin className="h-4 w-4 mr-2" />;
+    }
+  };
+  
+  // Get badge label for place action
+  const getActionLabel = (action?: PlaceAction) => {
+    switch(action) {
+      case 'rent': return 'For Rent';
+      case 'sell': return 'For Sale';
+      case 'buy': return 'Wanted to Buy';
+      default: return '';
+    }
   };
   
   return (
@@ -206,15 +290,24 @@ const MapMarker = ({ item, onClick, isSelected = false }: MapMarkerProps) => {
               </Badge>
             ) : (
               <Badge variant="outline" className="bg-primary text-white">
-                {markerType === 'myPlace' ? 'My Place' : 
-                 markerType === 'publicPlace' ? 'Public Place' :
-                 markerType === 'property' ? 'Property' : 
-                 markerType === 'donation' ? 'Donation' : markerType}
+                {item.category || 
+                  (item.type === 'myPlace' ? 'My Place' : 
+                  item.type === 'publicPlace' ? 'Public Place' :
+                  item.type === 'property' ? 'Property' : 
+                  item.type === 'donation' ? 'Donation' : item.type)}
+              </Badge>
+            )}
+            
+            {!isEvent(item) && item.action && (
+              <Badge variant="secondary">
+                {getActionLabel(item.action)}
               </Badge>
             )}
             
             {isEnhanced && (
-              <Badge variant="secondary">Enhanced</Badge>
+              <Badge variant="outline" className="bg-amber-500 text-white ml-1">
+                Featured
+              </Badge>
             )}
           </div>
           
@@ -225,7 +318,7 @@ const MapMarker = ({ item, onClick, isSelected = false }: MapMarkerProps) => {
           {isEvent(item) ? (
             <div className="flex flex-col space-y-1.5 text-xs text-gray-500">
               <div className="flex items-center">
-                {getEventIcon(eventType)}
+                {getIcon()}
                 <span>{new Date(item.date).toLocaleString()}</span>
               </div>
               <div className="flex items-center">
@@ -265,26 +358,46 @@ const MapMarker = ({ item, onClick, isSelected = false }: MapMarkerProps) => {
           ) : (
             <div className="flex flex-col space-y-1.5 text-xs text-gray-500">
               <div className="flex items-center">
-                {markerType === 'property' ? (
-                  <Store className="h-3 w-3 mr-1" />
-                ) : (
-                  <Home className="h-3 w-3 mr-1" />
-                )}
+                {getIcon()}
                 <span>
                   {item.location.buildingName && `${item.location.buildingName}, `}
                   {item.location.floor && `Floor ${item.location.floor}, `}
                   {item.location.unit && `Unit ${item.location.unit}`}
                 </span>
               </div>
-              {item.type === 'property' && item.price && (
-                <div className="flex items-center">
-                  <span className="font-medium">${item.price.toLocaleString()}</span>
+              
+              {item.price && (
+                <div className="flex items-center font-medium text-sm">
+                  ${item.price.toLocaleString()}
+                  {item.action === 'rent' && <span className="text-xs ml-1">/month</span>}
                 </div>
               )}
-              {item.type === 'donation' && (
+              
+              {item.area && (
                 <div className="flex items-center">
-                  <Gift className="h-3 w-3 mr-1" />
-                  <span>Free to collect</span>
+                  <span>{item.area} m²</span>
+                </div>
+              )}
+              
+              {/* Broker information if available */}
+              {item.broker && (
+                <div className="flex items-center mt-1 bg-gray-50 p-1 rounded">
+                  <div className="flex items-center text-xs">
+                    <span className="font-medium">Broker: </span>
+                    <span className="ml-1">{item.broker.name}</span>
+                    <span className="ml-1">({item.broker.rating}★)</span>
+                  </div>
+                </div>
+              )}
+              
+              {/* Deliverer information if available */}
+              {item.deliverer && (
+                <div className="flex items-center mt-1 bg-gray-50 p-1 rounded">
+                  <div className="flex items-center text-xs">
+                    <span className="font-medium">Deliverer: </span>
+                    <span className="ml-1">{item.deliverer.name}</span>
+                    <span className="ml-1">({item.deliverer.rating}★)</span>
+                  </div>
                 </div>
               )}
               
@@ -316,7 +429,13 @@ const MapMarker = ({ item, onClick, isSelected = false }: MapMarkerProps) => {
               <Button size="sm" variant="outline">View Details</Button>
             </Link>
             <Button size="sm">
-              {isEvent(item) ? 'Join' : item.type === 'property' ? 'Inquire' : item.type === 'donation' ? 'Claim' : 'Visit'}
+              {isEvent(item) ? 'Join' : 
+               item.action === 'rent' ? 'Rent' :
+               item.action === 'sell' ? 'Buy' : 
+               item.action === 'buy' ? 'Offer' :
+               item.category === 'restaurant' ? 'Book' :
+               item.category === 'shop' ? 'Shop' :
+               'View'}
             </Button>
           </div>
         </div>
