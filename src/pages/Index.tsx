@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Map as MapIcon, Users, CalendarPlus, Search } from 'lucide-react';

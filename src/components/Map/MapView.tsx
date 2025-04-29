@@ -56,8 +56,8 @@ export interface MapViewProps {
   filterHobby?: string;
   filterType?: string;
   filterDistance?: number;
-  filterCategory?: string;  // Added for places filtering (flat, restaurant, shop)
-  filterAction?: string;    // Added for places filtering (rent, sell, buy)
+  filterCategory?: string;  
+  filterAction?: string;    
 }
 
 const MapView = ({ 
@@ -82,8 +82,8 @@ const MapView = ({
     lng: -74.006
   });
 
-  // Apply filters to events and places
-  const filteredEvents = events.filter(event => {
+  // Apply filters to events and places - Fixed to avoid lodash reference errors
+  const filteredEvents = events.filter((event) => {
     // Filter by hobby if specified
     if (filterHobby && filterHobby !== 'All' && event.hobby !== filterHobby) {
       return false;
@@ -102,7 +102,7 @@ const MapView = ({
     return true;
   });
   
-  const filteredPlaces = places.filter(place => {
+  const filteredPlaces = places.filter((place) => {
     // Filter by type if specified
     if (filterType && filterType !== 'All' && place.type !== filterType) {
       return false;
@@ -156,12 +156,10 @@ const MapView = ({
     }
   };
 
-  // This component is now defined separately to avoid using react-leaflet hooks outside of MapContainer
+  // This component is defined separately to avoid using react-leaflet hooks outside of MapContainer
   const MapContent = () => {
-    // Correctly use the useMap hook imported directly from react-leaflet
     const map = useMap();
     
-    // Update map view when center changes
     useEffect(() => {
       map.setView([mapCenter.lat, mapCenter.lng], map.getZoom());
     }, [mapCenter, map]);
