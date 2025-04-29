@@ -1,7 +1,7 @@
 import { Marker, Popup } from 'react-leaflet';
 import { Icon } from 'leaflet';
 import { Link } from 'react-router-dom';
-import { Users, Calendar, MapPin, Home, Store, Gift, Map, Building, Restaurant, Shop } from 'lucide-react';
+import { Users, Calendar, MapPin, Home, Store, Gift, Map, Building, UtensilsCrossed, Store as Shop } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
@@ -251,7 +251,7 @@ const MapMarker = ({ item, onClick, isSelected = false }: MapMarkerProps) => {
     } else {
       if (item.category === 'flat') return <Building className="h-4 w-4 mr-2" />;
       if (item.category === 'villa') return <Home className="h-4 w-4 mr-2" />;
-      if (item.category === 'restaurant') return <Restaurant className="h-4 w-4 mr-2" />;
+      if (item.category === 'restaurant') return <UtensilsCrossed className="h-4 w-4 mr-2" />;
       if (item.category === 'shop') return <Shop className="h-4 w-4 mr-2" />;
       
       if (item.type === 'myPlace') return <Home className="h-4 w-4 mr-2" />;

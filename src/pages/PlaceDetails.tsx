@@ -1,8 +1,7 @@
-
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
-  Building, Home, Restaurant, Shop, MapPin, User, Star,
+  Building, Home, UtensilsCrossed, Store, MapPin, User, Star,
   Phone, Mail, Info, Briefcase, Truck, DollarSign
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -120,8 +119,8 @@ const PlaceDetails = () => {
     switch(place.category) {
       case 'flat': return <Building className="h-5 w-5" />;
       case 'villa': return <Home className="h-5 w-5" />;
-      case 'restaurant': return <Restaurant className="h-5 w-5" />;
-      case 'shop': return <Shop className="h-5 w-5" />;
+      case 'restaurant': return <UtensilsCrossed className="h-5 w-5" />;
+      case 'shop': return <Store className="h-5 w-5" />;
       default: return <MapPin className="h-5 w-5" />;
     }
   };

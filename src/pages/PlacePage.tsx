@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MapPin, Plus, Filter, Building, Restaurant, Shop } from 'lucide-react';
+import { MapPin, Plus, Filter, Building, UtensilsCrossed, Store } from 'lucide-react';
 import Navbar from '@/components/UI/Navbar';
 import MapView from '@/components/Map/MapView';
 import { useToast } from '@/components/ui/use-toast';
@@ -166,8 +166,8 @@ const PlacePage = () => {
                         <TabsList className="w-full grid grid-cols-4">
                           <TabsTrigger value="All">All</TabsTrigger>
                           <TabsTrigger value="flat"><Building className="h-4 w-4" /></TabsTrigger>
-                          <TabsTrigger value="restaurant"><Restaurant className="h-4 w-4" /></TabsTrigger>
-                          <TabsTrigger value="shop"><Shop className="h-4 w-4" /></TabsTrigger>
+                          <TabsTrigger value="restaurant"><UtensilsCrossed className="h-4 w-4" /></TabsTrigger>
+                          <TabsTrigger value="shop"><Store className="h-4 w-4" /></TabsTrigger>
                         </TabsList>
                       </Tabs>
                     </div>
@@ -235,14 +235,14 @@ const PlacePage = () => {
               className="flex-shrink-0 mr-2"
               onClick={() => setFilterCategory('restaurant')}
             >
-              <Restaurant className="h-4 w-4 mr-2" /> Restaurants
+              <UtensilsCrossed className="h-4 w-4 mr-2" /> Restaurants
             </Button>
             <Button 
               variant={filterCategory === 'shop' ? 'default' : 'outline'}
               className="flex-shrink-0"
               onClick={() => setFilterCategory('shop')}
             >
-              <Shop className="h-4 w-4 mr-2" /> Shops
+              <Store className="h-4 w-4 mr-2" /> Shops
             </Button>
           </div>
           

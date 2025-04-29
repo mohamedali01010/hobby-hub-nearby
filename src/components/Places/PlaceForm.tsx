@@ -1,9 +1,8 @@
-
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { MapPin, Building, Restaurant, Shop, Home, Upload } from 'lucide-react';
+import { MapPin, Building, UtensilsCrossed, Store, Home, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -243,13 +242,13 @@ const PlaceForm = ({ onSubmit, initialData }: PlaceFormProps) => {
                     </SelectItem>
                     <SelectItem value="restaurant">
                       <div className="flex items-center">
-                        <Restaurant className="h-4 w-4 mr-2 text-amber-500" />
+                        <UtensilsCrossed className="h-4 w-4 mr-2 text-amber-500" />
                         <span>Restaurant</span>
                       </div>
                     </SelectItem>
                     <SelectItem value="shop">
                       <div className="flex items-center">
-                        <Shop className="h-4 w-4 mr-2 text-green-500" />
+                        <Store className="h-4 w-4 mr-2 text-green-500" />
                         <span>Shop</span>
                       </div>
                     </SelectItem>
