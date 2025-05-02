@@ -143,6 +143,25 @@ export interface Location {
   buildingName?: string;
 }
 
+// New interface for LiveQueue tracking
+export interface LiveQueue {
+  count: number;
+  estimatedWaitTime: number; // minutes
+  lastUpdated: string; // ISO date string
+  status: 'low' | 'moderate' | 'busy' | 'very-busy';
+}
+
+// New interface for hosted event summary (minimal info)
+export interface HostedEventSummary {
+  id: string;
+  title: string;
+  hobby: string;
+  hobbyType: 'sports' | 'arts' | 'music' | 'tech' | 'outdoors' | 'food' | 'other';
+  eventType?: EventType;
+  date: string;
+  attendees: number;
+}
+
 export interface Place {
   id: string;
   title: string;
@@ -153,11 +172,13 @@ export interface Place {
   price?: number;
   photos?: string[];
   isEnhanced?: boolean;
-  category?: PlaceCategory;  // Added property
-  action?: PlaceAction;      // Added property
-  area?: number;             // Added property (in square meters/feet)
-  broker?: BrokerInfo;       // Added property for broker information
-  deliverer?: DelivererInfo; // Added property for deliverer information
+  category?: PlaceCategory;
+  action?: PlaceAction;
+  area?: number;
+  broker?: BrokerInfo;
+  deliverer?: DelivererInfo;
+  liveQueue?: LiveQueue; // Added for tracking live queues
+  hostedEvents?: HostedEventSummary[]; // Added for places with multiple events
 }
 
 export interface BrokerInfo {
