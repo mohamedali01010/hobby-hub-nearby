@@ -1,15 +1,17 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MapPin, Plus, Filter, Building, UtensilsCrossed, Store } from 'lucide-react';
+import { MapPin, Plus, Filter, Building, UtensilsCrossed, Store, Star, Briefcase, Truck } from 'lucide-react';
 import Navbar from '@/components/UI/Navbar';
 import MapView from '@/components/Map/MapView';
 import { useToast } from '@/components/ui/use-toast';
 import { Place, MapMarkerItem, PlaceCategory, PlaceAction } from '@/components/Map/MapMarker';
 import PlaceForm from '@/components/Places/PlaceForm';
 import { Card } from '@/components/ui/card';
+import { Slider } from '@/components/ui/slider';
 
 // Sample place data
 const samplePlaces: Place[] = [
@@ -45,7 +47,14 @@ const samplePlaces: Place[] = [
     action: 'sell',
     price: 450000,
     area: 180,
-    photos: ['/placeholder.svg']
+    photos: ['/placeholder.svg'],
+    broker: {
+      id: 'b2',
+      name: 'Emma Johnson',
+      rating: 4.5,
+      commissionsRate: 4.5,
+      photoUrl: '/placeholder.svg'
+    }
   },
   {
     id: '3',
@@ -58,7 +67,15 @@ const samplePlaces: Place[] = [
     action: 'rent',
     price: 3500,
     area: 120,
-    photos: ['/placeholder.svg', '/placeholder.svg', '/placeholder.svg']
+    photos: ['/placeholder.svg', '/placeholder.svg', '/placeholder.svg'],
+    deliverer: {
+      id: 'd1',
+      name: 'Fast Delivery Inc.',
+      rating: 4.5,
+      deliveryFee: 15,
+      deliveryArea: 'Downtown area',
+      photoUrl: '/placeholder.svg'
+    }
   },
   {
     id: '4',
@@ -99,6 +116,8 @@ const PlacePage = () => {
   const [filterCategory, setFilterCategory] = useState<string>('All');
   const [filterAction, setFilterAction] = useState<string>('All');
   const [filterOpen, setFilterOpen] = useState(false);
+  const [filterBrokerRating, setFilterBrokerRating] = useState<number | null>(null);
+  const [filterDelivererRating, setFilterDelivererRating] = useState<number | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -137,6 +156,9 @@ const PlacePage = () => {
   const handleViewDetails = (placeId: string) => {
     navigate(`/places/${placeId}`);
   };
+
+  const hasBrokers = places.some(place => place.broker);
+  const hasDeliverers = places.some(place => place.deliverer);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -183,6 +205,70 @@ const PlacePage = () => {
                         </TabsList>
                       </Tabs>
                     </div>
+
+                    {hasBrokers && (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-sm font-medium">Broker Rating</h3>
+                          <div className="text-xs text-gray-500">
+                            {filterBrokerRating ? `${filterBrokerRating}+ stars` : 'Any'}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Briefcase className="h-4 w-4 text-gray-500" />
+                          <Slider 
+                            defaultValue={[0]} 
+                            max={5} 
+                            step={0.5} 
+                            className="flex-1"
+                            onValueChange={(value) => setFilterBrokerRating(value[0] > 0 ? value[0] : null)} 
+                          />
+                          <Star className="h-4 w-4 text-yellow-400" />
+                        </div>
+                        {filterBrokerRating && (
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => setFilterBrokerRating(null)}
+                            className="text-xs h-6"
+                          >
+                            Clear
+                          </Button>
+                        )}
+                      </div>
+                    )}
+
+                    {hasDeliverers && (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-sm font-medium">Deliverer Rating</h3>
+                          <div className="text-xs text-gray-500">
+                            {filterDelivererRating ? `${filterDelivererRating}+ stars` : 'Any'}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Truck className="h-4 w-4 text-gray-500" />
+                          <Slider 
+                            defaultValue={[0]} 
+                            max={5} 
+                            step={0.5} 
+                            className="flex-1"
+                            onValueChange={(value) => setFilterDelivererRating(value[0] > 0 ? value[0] : null)} 
+                          />
+                          <Star className="h-4 w-4 text-yellow-400" />
+                        </div>
+                        {filterDelivererRating && (
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => setFilterDelivererRating(null)}
+                            className="text-xs h-6"
+                          >
+                            Clear
+                          </Button>
+                        )}
+                      </div>
+                    )}
                   </div>
                   <div className="flex justify-end">
                     <Button type="button" onClick={() => setFilterOpen(false)}>
@@ -250,7 +336,9 @@ const PlacePage = () => {
             {places
               .filter(place => 
                 (filterCategory === 'All' || place.category === filterCategory) && 
-                (filterAction === 'All' || place.action === filterAction)
+                (filterAction === 'All' || place.action === filterAction) &&
+                (!filterBrokerRating || (place.broker && place.broker.rating >= filterBrokerRating)) &&
+                (!filterDelivererRating || (place.deliverer && place.deliverer.rating >= filterDelivererRating))
               )
               .map(place => (
                 <div 
@@ -309,16 +397,24 @@ const PlacePage = () => {
                     <div className="mt-2 text-xs bg-gray-50 p-2 rounded">
                       {place.broker && (
                         <div className="flex items-center">
+                          <Briefcase className="h-3 w-3 text-gray-500 mr-1" />
                           <span className="font-medium">Broker:</span>
                           <span className="ml-1">{place.broker.name}</span>
-                          <span className="ml-1 text-amber-500">★{place.broker.rating}</span>
+                          <div className="flex items-center ml-1 text-amber-500">
+                            <Star className="h-3 w-3 fill-amber-500" />
+                            <span className="ml-0.5">{place.broker.rating}</span>
+                          </div>
                         </div>
                       )}
                       {place.deliverer && (
-                        <div className="flex items-center">
+                        <div className="flex items-center mt-1">
+                          <Truck className="h-3 w-3 text-gray-500 mr-1" />
                           <span className="font-medium">Deliverer:</span>
                           <span className="ml-1">{place.deliverer.name}</span>
-                          <span className="ml-1 text-amber-500">★{place.deliverer.rating}</span>
+                          <div className="flex items-center ml-1 text-amber-500">
+                            <Star className="h-3 w-3 fill-amber-500" />
+                            <span className="ml-0.5">{place.deliverer.rating}</span>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -356,7 +452,9 @@ const PlacePage = () => {
             
             {places.filter(place => 
                 (filterCategory === 'All' || place.category === filterCategory) && 
-                (filterAction === 'All' || place.action === filterAction)
+                (filterAction === 'All' || place.action === filterAction) &&
+                (!filterBrokerRating || (place.broker && place.broker.rating >= filterBrokerRating)) &&
+                (!filterDelivererRating || (place.deliverer && place.deliverer.rating >= filterDelivererRating))
               ).length === 0 && (
               <div className="text-center py-8">
                 <MapPin className="mx-auto h-8 w-8 text-gray-400 mb-2" />
@@ -366,6 +464,8 @@ const PlacePage = () => {
                   onClick={() => {
                     setFilterCategory('All');
                     setFilterAction('All');
+                    setFilterBrokerRating(null);
+                    setFilterDelivererRating(null);
                   }}
                 >
                   Clear filters
@@ -383,6 +483,8 @@ const PlacePage = () => {
             height="h-[calc(100vh-4rem)]"
             filterCategory={filterCategory !== 'All' ? filterCategory : undefined}
             filterAction={filterAction !== 'All' ? filterAction : undefined}
+            filterBrokerRating={filterBrokerRating || undefined}
+            filterDelivererRating={filterDelivererRating || undefined}
           />
           
           {/* Selected Place Card - Overlay on map */}
@@ -402,6 +504,33 @@ const PlacePage = () => {
               <p className="text-xs text-gray-500 mt-1 line-clamp-2">
                 {getSelectedPlace()?.description}
               </p>
+              
+              {/* Show broker or deliverer info if available */}
+              {(getSelectedPlace()?.broker || getSelectedPlace()?.deliverer) && (
+                <div className="mt-2 text-xs border-t pt-2">
+                  {getSelectedPlace()?.broker && (
+                    <div className="flex items-center">
+                      <Briefcase className="h-3 w-3 text-gray-500 mr-1" />
+                      <span>{getSelectedPlace()?.broker.name} </span>
+                      <div className="flex items-center ml-auto text-amber-500">
+                        <Star className="h-3 w-3 fill-amber-500" />
+                        <span className="ml-0.5">{getSelectedPlace()?.broker.rating}</span>
+                      </div>
+                    </div>
+                  )}
+                  {getSelectedPlace()?.deliverer && (
+                    <div className="flex items-center mt-1">
+                      <Truck className="h-3 w-3 text-gray-500 mr-1" />
+                      <span>{getSelectedPlace()?.deliverer.name}</span>
+                      <div className="flex items-center ml-auto text-amber-500">
+                        <Star className="h-3 w-3 fill-amber-500" />
+                        <span className="ml-0.5">{getSelectedPlace()?.deliverer.rating}</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+              
               <div className="mt-2 flex justify-between items-center">
                 {getSelectedPlace()?.price && (
                   <div className="font-bold text-sm">

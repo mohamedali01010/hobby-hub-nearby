@@ -57,7 +57,9 @@ export interface MapViewProps {
   filterType?: string;
   filterDistance?: number;
   filterCategory?: string;  
-  filterAction?: string;    
+  filterAction?: string;
+  filterBrokerRating?: number;
+  filterDelivererRating?: number;
 }
 
 const MapView = ({ 
@@ -70,7 +72,9 @@ const MapView = ({
   filterType,
   filterDistance,
   filterCategory,
-  filterAction
+  filterAction,
+  filterBrokerRating,
+  filterDelivererRating
 }: MapViewProps) => {
   const { location, error } = useGeolocation();
   const [selectedItem, setSelectedItem] = useState<MapMarkerItem | null>(null);
@@ -115,6 +119,16 @@ const MapView = ({
     
     // Filter by action if specified (rent, sell, buy)
     if (filterAction && filterAction !== 'All' && place.action !== filterAction) {
+      return false;
+    }
+    
+    // Filter by broker rating if specified
+    if (filterBrokerRating && place.broker && place.broker.rating < filterBrokerRating) {
+      return false;
+    }
+    
+    // Filter by deliverer rating if specified
+    if (filterDelivererRating && place.deliverer && place.deliverer.rating < filterDelivererRating) {
       return false;
     }
     
