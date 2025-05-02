@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -89,6 +90,11 @@ const Places = () => {
     return true;
   });
 
+  // Function to navigate to place details
+  const goToPlaceDetails = (placeId: string) => {
+    navigate(`/places/${placeId}`);
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -176,12 +182,9 @@ const Places = () => {
                     <Button 
                       variant="outline" 
                       size="sm"
-                      onClick={() => {
-                        // In a real app, you would navigate to a place details page
-                        toast({
-                          title: "Place details",
-                          description: `Viewing details for ${place.title}`,
-                        });
+                      onClick={(e) => {
+                        e.stopPropagation(); // Stop event from bubbling up
+                        goToPlaceDetails(place.id);
                       }}
                     >
                       Details

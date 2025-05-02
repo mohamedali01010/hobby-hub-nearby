@@ -1,9 +1,9 @@
-
 import { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap, Circle, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Icon } from 'leaflet';
 import L from 'leaflet';
+import { useNavigate } from 'react-router-dom';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import MapMarker, { Event, Place, MapMarkerItem } from './MapMarker';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -202,6 +202,7 @@ const MapView = ({
   const { location, error } = useGeolocation();
   const [selectedItem, setSelectedItem] = useState<MapMarkerItem | null>(null);
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
   
   // Default location (New York City) until geolocation is available
   const [mapCenter, setMapCenter] = useState<Location>({
@@ -300,6 +301,13 @@ const MapView = ({
 
   const handleMarkerClick = (item: MapMarkerItem) => {
     setSelectedItem(item);
+    
+    // If it's a place, offer navigation
+    if ('type' in item && item.type === 'property') {
+      // If this is called from a popup button, the navigation is already handled elsewhere
+      console.log("Place marker clicked:", item);
+    }
+    
     if (onMarkerClick) {
       onMarkerClick(item);
     }
