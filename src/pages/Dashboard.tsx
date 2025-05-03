@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -285,7 +286,7 @@ const Dashboard = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       
-      <div className="flex-grow flex relative">
+      <div className="flex-grow flex relative h-[calc(100vh-4rem)] overflow-hidden">
         {/* Sidebar Toggle Button (Mobile) */}
         {isMobile && (
           <button
@@ -486,7 +487,7 @@ const Dashboard = () => {
           </div>
           
           {/* Results Panel (Right Side) */}
-          <div className="relative z-10 w-80 bg-white shadow-md ml-auto h-[calc(100vh-4rem)] overflow-hidden flex flex-col">
+          <div className="relative z-10 w-80 bg-white shadow-md ml-auto h-[calc(100vh-4rem)] flex flex-col">
             <div className="px-4 py-3 border-b flex items-center justify-between">
               <h2 className="font-semibold text-lg">
                 {activeTab === 'events' ? 'Events' : 'People'}
