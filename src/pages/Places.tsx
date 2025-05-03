@@ -1,60 +1,39 @@
-import { useState } from 'react';
+
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, MapPin } from 'lucide-react';
+import { Plus, MapPin, Map, Wifi } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import Navbar from '@/components/UI/Navbar';
 import MapView from '@/components/Map/MapView';
 import PlaceForm from '@/components/Places/PlaceForm';
 import { Place, MapMarkerItem } from '@/components/Map/MapMarker';
 import { useToast } from '@/components/ui/use-toast';
-
-// Sample place data
-const samplePlaces: Place[] = [
-  {
-    id: '1',
-    title: 'My Apartment',
-    description: 'My cozy apartment in downtown area, great for small gatherings.',
-    location: { lat: 51.505, lng: -0.09, floor: 3, unit: 'B4', buildingName: 'Riverside Apartments' },
-    type: 'myPlace',
-    isOwner: true,
-    isEnhanced: true,
-  },
-  {
-    id: '2',
-    title: 'City Park',
-    description: 'Large public park with sports facilities and picnic areas.',
-    location: { lat: 51.508, lng: -0.11 },
-    type: 'publicPlace',
-    isOwner: false,
-  },
-  {
-    id: '3',
-    title: 'Downtown Loft for Sale',
-    description: 'Modern loft apartment with great views, recently renovated.',
-    location: { lat: 51.501, lng: -0.08, floor: 5, buildingName: 'The Heights' },
-    type: 'property',
-    isOwner: true,
-    price: 450000,
-  },
-  {
-    id: '4',
-    title: 'Furniture Donation',
-    description: 'Slightly used office desk and chair available for donation.',
-    location: { lat: 51.503, lng: -0.12, floor: 1, unit: '101', buildingName: 'Oakwood Building' },
-    type: 'donation',
-    isOwner: true,
-  },
-];
+import { generateSamplePlaces } from '@/utils/sampleData';
+import { useGeolocation } from '@/hooks/useGeolocation';
 
 const Places = () => {
-  const [places, setPlaces] = useState<Place[]>(samplePlaces);
+  const { location } = useGeolocation();
+  const [places, setPlaces] = useState<Place[]>(() => {
+    const defaultLocation = { lat: 51.505, lng: -0.09 };
+    const center = location || defaultLocation;
+    return generateSamplePlaces(20, center);
+  });
+  
   const [selectedPlace, setSelectedPlace] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
   const { toast } = useToast();
   const navigate = useNavigate();
+  
+  // Update sample data if location changes
+  useEffect(() => {
+    if (location) {
+      setPlaces(generateSamplePlaces(20, location));
+    }
+  }, [location]);
 
   const handleMarkerClick = (item: MapMarkerItem) => {
     if ('type' in item) {
@@ -78,6 +57,11 @@ const Places = () => {
     });
     
     setDialogOpen(false);
+    
+    toast({
+      title: "Place created",
+      description: `Successfully created "${data.title}"`,
+    });
   };
 
   // Filter places based on active tab
@@ -86,12 +70,26 @@ const Places = () => {
     if (activeTab === 'myPlaces') return place.isOwner;
     if (activeTab === 'properties') return place.type === 'property';
     if (activeTab === 'donations') return place.type === 'donation';
+    if (activeTab === 'withLiveQueue') return !!place.liveQueue;
     return true;
   });
 
   // Function to navigate to place details
   const goToPlaceDetails = (placeId: string) => {
     navigate(`/places/${placeId}`);
+  };
+
+  // Helper to get status badge color
+  const getStatusBadgeClass = (status: 'low' | 'moderate' | 'busy' | 'very-busy' | undefined) => {
+    if (!status) return '';
+    
+    switch(status) {
+      case 'low': return 'bg-green-500';
+      case 'moderate': return 'bg-amber-500';
+      case 'busy': return 'bg-orange-500';
+      case 'very-busy': return 'bg-red-500';
+      default: return 'bg-gray-500';
+    }
   };
 
   return (
@@ -123,7 +121,9 @@ const Places = () => {
               <TabsTrigger value="all" className="flex-1">All</TabsTrigger>
               <TabsTrigger value="myPlaces" className="flex-1">My Places</TabsTrigger>
               <TabsTrigger value="properties" className="flex-1">Properties</TabsTrigger>
-              <TabsTrigger value="donations" className="flex-1">Donations</TabsTrigger>
+              <TabsTrigger value="withLiveQueue" className="flex-1 flex items-center">
+                <Wifi className="h-3 w-3 mr-1" />Live
+              </TabsTrigger>
             </TabsList>
           </Tabs>
           
@@ -143,9 +143,17 @@ const Places = () => {
               filteredPlaces.map(place => (
                 <div 
                   key={place.id} 
-                  className={`p-3 border rounded-lg cursor-pointer transition-all hover:border-primary ${selectedPlace === place.id ? 'border-primary bg-primary/5' : ''}`}
+                  className={`p-3 border rounded-lg cursor-pointer transition-all hover:border-primary relative ${selectedPlace === place.id ? 'border-primary bg-primary/5' : ''}`}
                   onClick={() => setSelectedPlace(place.id)}
                 >
+                  {place.liveQueue && (
+                    <div className="absolute -top-2 -right-2">
+                      <Badge className={`${getStatusBadgeClass(place.liveQueue.status)} text-white`}>
+                        {place.liveQueue.status.toUpperCase()}
+                      </Badge>
+                    </div>
+                  )}
+                  
                   <div className="flex items-start justify-between">
                     <h3 className="font-medium">{place.title}</h3>
                     <span className={`text-xs px-2 py-1 rounded-full ${
@@ -154,10 +162,11 @@ const Places = () => {
                       place.type === 'property' ? 'bg-green-100 text-green-700' :
                       'bg-purple-100 text-purple-700'
                     }`}>
-                      {place.type === 'myPlace' ? 'My Place' : 
+                      {place.category || 
+                      (place.type === 'myPlace' ? 'My Place' : 
                       place.type === 'publicPlace' ? 'Public' :
                       place.type === 'property' ? 'Property' : 
-                      'Donation'}
+                      'Donation')}
                     </span>
                   </div>
                   
@@ -172,6 +181,20 @@ const Places = () => {
                       {place.location.unit && <span className="ml-1">{place.location.floor ? ', ' : ''}Unit {place.location.unit}</span>}
                     </div>
                   </div>
+                  
+                  {/* Live queue information */}
+                  {place.liveQueue && (
+                    <div className="mt-2 text-xs">
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-500">Current Queue:</span>
+                        <span className="font-medium">{place.liveQueue.count} people</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-500">Estimated Wait:</span>
+                        <span className="font-medium">{place.liveQueue.estimatedWaitTime} min</span>
+                      </div>
+                    </div>
+                  )}
                   
                   {place.type === 'property' && place.price && (
                     <div className="mt-2 font-bold">${place.price.toLocaleString()}</div>
@@ -210,7 +233,7 @@ const Places = () => {
           </div>
         </div>
         
-        <div className="flex-grow relative overflow-hidden">
+        <div className="flex-grow relative">
           <MapView 
             places={places} 
             onMarkerClick={handleMarkerClick}
@@ -219,6 +242,7 @@ const Places = () => {
                          activeTab === 'myPlaces' ? 'myPlace' :
                          activeTab === 'properties' ? 'property' :
                          activeTab === 'donations' ? 'donation' : undefined}
+            showControls={true}
           />
         </div>
       </div>

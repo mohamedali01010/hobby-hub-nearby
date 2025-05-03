@@ -3,10 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Slider } from "@/components/ui/slider";
 import { Button } from '@/components/ui/button';
-import { Search, Filter, Calendar, MapPin, Map, Plus, Users, X } from 'lucide-react';
+import { Search, Filter, Calendar, MapPin, Map, Plus, Users, X, Radio, Flame, Wifi } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import Navbar from '@/components/UI/Navbar';
-import Footer from '@/components/UI/Footer';
 import MapView from '@/components/Map/MapView';
 import EventCard from '@/components/Events/EventCard';
 import UserCard from '@/components/Users/UserCard';
@@ -15,118 +14,49 @@ import { useAuth } from '@/context/AuthContext';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useToast } from '@/hooks/use-toast';
+import { generateSampleEvents, generateSamplePlaces } from '@/utils/sampleData';
+import { Badge } from '@/components/ui/badge';
 
-// Sample event data with specialized event types
-const sampleEvents = [
-  {
-    id: '1',
-    title: 'Sunday Football Match',
-    description: 'Casual 5v5 football match. All skill levels welcome!',
-    location: { lat: 51.505, lng: -0.09 },
-    hobby: 'Football',
-    hobbyType: 'sports' as const,
-    date: '2025-04-20T14:00:00Z',
-    attendees: 8,
-    eventType: 'football' as const,
-    photos: [
-      'https://images.unsplash.com/photo-1517466787929-bc90951d0974?q=80&w=2533',
-      'https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=2576'
-    ],
-    videos: ['https://example.com/football-video.mp4']
-  },
-  {
-    id: '2',
-    title: 'Photography Walk',
-    description: 'Explore the city and capture its beauty with fellow photography enthusiasts.',
-    location: { lat: 51.507, lng: -0.1 },
-    hobby: 'Photography',
-    hobbyType: 'arts' as const,
-    date: '2025-04-19T10:00:00Z',
-    attendees: 5,
-    photos: [
-      'https://images.unsplash.com/photo-1554080353-a576cf803bda?q=80&w=2187',
-      'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?q=80&w=2370'
-    ]
-  },
-  {
-    id: '3',
-    title: 'Swimming Class for Beginners',
-    description: 'Learn swimming basics in a friendly environment. All equipment provided.',
-    location: { lat: 51.503, lng: -0.11 },
-    hobby: 'Swimming',
-    hobbyType: 'sports' as const,
-    date: '2025-04-21T18:00:00Z',
-    attendees: 6,
-    eventType: 'swimming' as const,
-    photos: [
-      'https://images.unsplash.com/photo-1560090995-01632a28895b?q=80&w=2594',
-      'https://images.unsplash.com/photo-1551958219-acbc608c6377?q=80&w=2940'
-    ],
-    videos: ['https://example.com/swimming-tips.mp4']
-  },
-  {
-    id: '4',
-    title: 'Coding Workshop',
-    description: 'Learn the basics of web development in this beginner-friendly workshop.',
-    location: { lat: 51.51, lng: -0.08 },
-    hobby: 'Programming',
-    hobbyType: 'tech' as const,
-    date: '2025-04-22T17:00:00Z',
-    attendees: 12,
-    photos: [
-      'https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=2944',
-      'https://images.unsplash.com/photo-1555099962-4199c345e5dd?q=80&w=2940'
-    ]
-  },
-  {
-    id: '5',
-    title: 'Apartment Viewing - Central London',
-    description: 'Open house for a modern 2-bedroom apartment in central London.',
-    location: { lat: 51.515, lng: -0.09 },
-    hobby: 'Property',
-    hobbyType: 'other' as const,
-    date: '2025-04-25T14:00:00Z',
-    attendees: 3,
-    eventType: 'rent' as const,
-    photos: [
-      'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=2940',
-      'https://images.unsplash.com/photo-1581858726788-75bc0f6a952d?q=80&w=2787'
-    ],
-    videos: ['https://example.com/apartment-tour.mp4']
-  },
+// Available hobby filters
+const hobbyFilters = [
+  { name: 'All', type: 'all' as const },
+  { name: 'Football', type: 'sports' as const },
+  { name: 'Basketball', type: 'sports' as const },
+  { name: 'Swimming', type: 'sports' as const },
+  { name: 'Photography', type: 'arts' as const },
+  { name: 'Painting', type: 'arts' as const },
+  { name: 'Guitar', type: 'music' as const },
+  { name: 'Programming', type: 'tech' as const },
+  { name: 'Hiking', type: 'outdoors' as const },
+  { name: 'Cooking', type: 'food' as const },
+  { name: 'Property', type: 'other' as const },
 ];
 
-// Sample places data
-const samplePlaces = [
-  {
-    id: 'p1',
-    title: 'Local Sports Center',
-    description: 'Multi-purpose sports facility with football fields, swimming pool, and gym.',
-    location: { lat: 51.508, lng: -0.11 },
-    type: 'publicPlace' as const,
-    isOwner: false
-  },
-  {
-    id: 'p2',
-    title: 'City Photography Studio',
-    description: 'Professional studio with equipment rental and workshop space.',
-    location: { lat: 51.502, lng: -0.09 },
-    type: 'publicPlace' as const,
-    isOwner: false
-  },
-  {
-    id: 'p3',
-    title: 'Central Apartment',
-    description: 'Modern 2-bedroom apartment near city center with great amenities.',
-    location: { lat: 51.515, lng: -0.09 },
-    type: 'property' as const,
-    isOwner: true,
-    price: 1500,
-    photos: [
-      'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=2940',
-      'https://images.unsplash.com/photo-1581858726788-75bc0f6a952d?q=80&w=2787'
-    ]
-  }
+// Place type filters
+const placeTypeFilters = [
+  { name: 'All', type: 'all' },
+  { name: 'My Places', type: 'myPlace' },
+  { name: 'Public Places', type: 'publicPlace' },
+  { name: 'Properties', type: 'property' },
+  { name: 'Donations', type: 'donation' },
+];
+
+// Place category filters
+const placeCategoryFilters = [
+  { name: 'All', type: 'all' },
+  { name: 'Flats', type: 'flat' },
+  { name: 'Villas', type: 'villa' },
+  { name: 'Restaurants', type: 'restaurant' },
+  { name: 'Shops', type: 'shop' },
+  { name: 'Cafes', type: 'cafe' },
+  { name: 'Bars', type: 'bar' },
+  { name: 'Hotels', type: 'hotel' },
+  { name: 'Schools', type: 'school' },
+  { name: 'Parks', type: 'park' },
+  { name: 'Landmarks', type: 'landmark' },
+  { name: 'Theaters', type: 'theater' },
+  { name: 'Beaches', type: 'beach' },
+  { name: 'Camping', type: 'camping' },
 ];
 
 // Sample user data
@@ -172,21 +102,6 @@ const sampleUsers = [
   },
 ];
 
-// Available hobby filters
-const hobbyFilters = [
-  { name: 'All', type: 'all' as const },
-  { name: 'Football', type: 'sports' as const },
-  { name: 'Basketball', type: 'sports' as const },
-  { name: 'Swimming', type: 'sports' as const },
-  { name: 'Photography', type: 'arts' as const },
-  { name: 'Painting', type: 'arts' as const },
-  { name: 'Guitar', type: 'music' as const },
-  { name: 'Programming', type: 'tech' as const },
-  { name: 'Hiking', type: 'outdoors' as const },
-  { name: 'Cooking', type: 'food' as const },
-  { name: 'Property', type: 'other' as const },
-];
-
 const Dashboard = () => {
   const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
@@ -199,12 +114,38 @@ const Dashboard = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedHobby, setSelectedHobby] = useState<string>('All');
   const [placeType, setPlaceType] = useState<string>('All');
+  const [placeCategory, setPlaceCategory] = useState<string>('All');
   const [maxDistance, setMaxDistance] = useState([10]); // km
   const [dateFilter, setDateFilter] = useState('all'); // all, today, tomorrow, this-week
   const [selectedEvent, setSelectedEvent] = useState<string | null>(null);
+  const [showLiveOnly, setShowLiveOnly] = useState(false);
   
+  // Generate the sample data when component loads
+  const [events, setEvents] = useState(() => {
+    const defaultLocation = { lat: 51.505, lng: -0.09 };
+    const center = location || defaultLocation;
+    return generateSampleEvents(40, center);
+  });
+  
+  const [places, setPlaces] = useState(() => {
+    const defaultLocation = { lat: 51.505, lng: -0.09 };
+    const center = location || defaultLocation;
+    return generateSamplePlaces(20, center);
+  });
+  
+  // Update sample data if location changes
+  useEffect(() => {
+    if (location) {
+      setEvents(generateSampleEvents(40, location));
+      setPlaces(generateSamplePlaces(20, location));
+    }
+  }, [location]);
+
   // Apply filters to events
-  const filteredEvents = sampleEvents.filter(event => {
+  const filteredEvents = events.filter(event => {
+    // Apply live only filter
+    if (showLiveOnly && !event.isLive) return false;
+    
     // Apply hobby filter
     if (selectedHobby !== 'All' && event.hobby !== selectedHobby) return false;
     
@@ -233,6 +174,23 @@ const Dashboard = () => {
       endOfWeek.setDate(endOfWeek.getDate() + (7 - endOfWeek.getDay()));
       if (!(eventDate >= today && eventDate < endOfWeek)) return false;
     }
+    
+    return true;
+  });
+  
+  // Apply filters to places
+  const filteredPlaces = places.filter(place => {
+    // Apply type filter
+    if (placeType !== 'All' && place.type !== placeType) return false;
+    
+    // Apply category filter
+    if (placeCategory !== 'All' && place.category !== placeCategory) return false;
+    
+    // Apply search filter
+    if (searchQuery && !place.title.toLowerCase().includes(searchQuery.toLowerCase()) && 
+        !place.description.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+    
+    // Apply distance filter (pending implementation)
     
     return true;
   });
@@ -281,6 +239,18 @@ const Dashboard = () => {
     return null;
   }
 
+  // Calculate stats
+  const liveEventsCount = events.filter(e => e.isLive).length;
+  const placesWithLiveQueueCount = places.filter(p => p.liveQueue).length;
+  const todayEventsCount = events.filter(event => {
+    const eventDate = new Date(event.date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return eventDate >= today && eventDate < tomorrow;
+  }).length;
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -321,6 +291,24 @@ const Dashboard = () => {
             )}
           </div>
           
+          {/* Stats Summary */}
+          <div className="px-4 py-2 bg-gray-50">
+            <div className="flex justify-between text-xs text-gray-600">
+              <div className="flex items-center">
+                <Radio className="h-3 w-3 mr-1 text-red-500" />
+                <span>{liveEventsCount} live events</span>
+              </div>
+              <div className="flex items-center">
+                <Calendar className="h-3 w-3 mr-1 text-blue-500" />
+                <span>{todayEventsCount} today</span>
+              </div>
+              <div className="flex items-center">
+                <Wifi className="h-3 w-3 mr-1 text-purple-500" />
+                <span>{placesWithLiveQueueCount} live updates</span>
+              </div>
+            </div>
+          </div>
+          
           {/* Search and Filters */}
           <div className="p-4 space-y-6 overflow-y-auto flex-grow">
             {/* Search Box */}
@@ -339,9 +327,33 @@ const Dashboard = () => {
             <Tabs defaultValue="events" value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="w-full">
                 <TabsTrigger value="events" className="flex-1">Events</TabsTrigger>
+                <TabsTrigger value="places" className="flex-1">Places</TabsTrigger>
                 <TabsTrigger value="people" className="flex-1">People</TabsTrigger>
               </TabsList>
             </Tabs>
+            
+            {/* Live only toggle (for events) */}
+            {activeTab === 'events' && (
+              <div className="flex items-center justify-between">
+                <label htmlFor="live-toggle" className="flex items-center cursor-pointer">
+                  <div className="relative">
+                    <input 
+                      id="live-toggle" 
+                      type="checkbox" 
+                      className="sr-only" 
+                      checked={showLiveOnly}
+                      onChange={() => setShowLiveOnly(!showLiveOnly)}
+                    />
+                    <div className={`block w-10 h-6 rounded-full ${showLiveOnly ? 'bg-red-500' : 'bg-gray-300'}`}></div>
+                    <div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${showLiveOnly ? 'transform translate-x-4' : ''}`}></div>
+                  </div>
+                  <div className="ml-3 text-sm font-medium flex items-center">
+                    <Flame className={`mr-1 h-4 w-4 ${showLiveOnly ? 'text-red-500' : 'text-gray-500'}`} />
+                    Show Live Events Only
+                  </div>
+                </label>
+              </div>
+            )}
             
             {/* Hobby Filter */}
             <div>
@@ -363,41 +375,46 @@ const Dashboard = () => {
               </div>
             </div>
             
-            {/* Type Filter (only for places) */}
-            {activeTab === 'events' && (
+            {/* Place Type Filter (only for places tab) */}
+            {activeTab === 'places' && (
               <div>
                 <h3 className="text-sm font-medium mb-2">Place Type</h3>
                 <div className="flex flex-wrap gap-2">
-                  <button
-                    className={`px-3 py-1 text-xs rounded-full transition-all ${
-                      placeType === 'All' 
-                        ? "bg-primary text-white"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    }`}
-                    onClick={() => setPlaceType('All')}
-                  >
-                    All
-                  </button>
-                  <button
-                    className={`px-3 py-1 text-xs rounded-full transition-all ${
-                      placeType === 'event' 
-                        ? "bg-primary text-white"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    }`}
-                    onClick={() => setPlaceType('event')}
-                  >
-                    Events
-                  </button>
-                  <button
-                    className={`px-3 py-1 text-xs rounded-full transition-all ${
-                      placeType === 'property' 
-                        ? "bg-primary text-white"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    }`}
-                    onClick={() => setPlaceType('property')}
-                  >
-                    Properties
-                  </button>
+                  {placeTypeFilters.map((filter) => (
+                    <button
+                      key={filter.type}
+                      className={`px-3 py-1 text-xs rounded-full transition-all ${
+                        placeType === filter.type 
+                          ? "bg-primary text-white"
+                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      }`}
+                      onClick={() => setPlaceType(filter.type)}
+                    >
+                      {filter.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {/* Place Category Filter (only for places tab) */}
+            {activeTab === 'places' && (
+              <div>
+                <h3 className="text-sm font-medium mb-2">Categories</h3>
+                <div className="flex flex-wrap gap-2">
+                  {placeCategoryFilters.map((filter) => (
+                    <button
+                      key={filter.type}
+                      className={`px-3 py-1 text-xs rounded-full transition-all ${
+                        placeCategory === filter.type 
+                          ? "bg-primary text-white"
+                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      }`}
+                      onClick={() => setPlaceCategory(filter.type)}
+                    >
+                      {filter.name}
+                    </button>
+                  ))}
                 </div>
               </div>
             )}
@@ -457,7 +474,7 @@ const Dashboard = () => {
             {/* Create New Event/Place Button */}
             <Button className="w-full mt-4">
               <Plus className="mr-2 h-4 w-4" />
-              Create New {activeTab === 'events' ? 'Event' : 'Place'}
+              Create New {activeTab === 'events' ? 'Event' : activeTab === 'places' ? 'Place' : 'Connection'}
             </Button>
           </div>
           
@@ -465,6 +482,8 @@ const Dashboard = () => {
           <div className="px-4 py-3 border-t text-sm text-gray-500">
             {activeTab === 'events' ? (
               <p>{filteredEvents.length} events found</p>
+            ) : activeTab === 'places' ? (
+              <p>{filteredPlaces.length} places found</p>
             ) : (
               <p>{filteredUsers.length} people found</p>
             )}
@@ -474,22 +493,25 @@ const Dashboard = () => {
         {/* Main Content */}
         <div className="relative flex-grow flex">
           {/* Map Container - Now wrapped in a div with relative positioning */}
-          <div className="relative flex-grow overflow-hidden">
+          <div className="relative flex-grow">
             <MapView 
               events={filteredEvents}
-              places={samplePlaces} 
+              places={filteredPlaces} 
               onMarkerClick={handleMarkerClick}
-              filterHobby={selectedHobby}
-              filterType={placeType}
+              filterHobby={selectedHobby !== 'All' ? selectedHobby : undefined}
+              filterType={placeType !== 'All' ? placeType : undefined}
+              filterCategory={placeCategory !== 'All' ? placeCategory : undefined}
               filterDistance={maxDistance[0]} 
+              height="h-full"
+              showControls={true}
             />
           </div>
           
-          {/* Results Panel (Right Side) - Absolute positioning removed */}
-          <div className="z-10 w-80 bg-white shadow-md h-[calc(100vh-4rem)] flex flex-col overflow-hidden">
+          {/* Results Panel (Right Side) */}
+          <div className="w-80 results-sidebar">
             <div className="px-4 py-3 border-b flex items-center justify-between">
               <h2 className="font-semibold text-lg">
-                {activeTab === 'events' ? 'Events' : 'People'}
+                {activeTab === 'events' ? 'Events' : activeTab === 'places' ? 'Places' : 'People'}
               </h2>
               <div className="flex space-x-2">
                 <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(!sidebarOpen)}>
@@ -499,23 +521,86 @@ const Dashboard = () => {
             </div>
             
             {/* Results List */}
-            <div className="p-4 overflow-y-auto flex-grow">
+            <div className="p-4 results-content">
               {activeTab === 'events' ? (
                 filteredEvents.length > 0 ? (
-                  filteredEvents.map(event => (
-                    <EventCard
-                      key={event.id}
-                      id={event.id}
-                      title={event.title}
-                      description={event.description}
-                      hobby={event.hobby}
-                      hobbyType={event.hobbyType}
-                      date={event.date}
-                      attendees={event.attendees}
-                      location={`${event.location.lat.toFixed(4)}, ${event.location.lng.toFixed(4)}`}
-                      distance={1.2} // This would be calculated from the user's location
-                    />
-                  ))
+                  <div className="space-y-4">
+                    {/* Live Events Section */}
+                    {filteredEvents.some(event => event.isLive) && (
+                      <div className="mb-6">
+                        <h3 className="text-sm font-medium flex items-center mb-3">
+                          <Radio className="h-4 w-4 mr-1 text-red-500" />
+                          Live Events
+                        </h3>
+                        <div className="space-y-3">
+                          {filteredEvents
+                            .filter(event => event.isLive)
+                            .map(event => (
+                              <div 
+                                key={event.id} 
+                                className={`p-3 border rounded-lg cursor-pointer transition-all hover:border-primary relative ${
+                                  selectedEvent === event.id ? 'border-primary bg-primary/5' : ''
+                                }`}
+                                onClick={() => setSelectedEvent(event.id)}
+                              >
+                                <div className="absolute -top-2 -right-2">
+                                  <Badge className="bg-red-500 text-white animate-pulse">LIVE</Badge>
+                                </div>
+                                <div className="flex items-start justify-between">
+                                  <h3 className="font-medium">{event.title}</h3>
+                                  <span className="text-xs px-2 py-1 rounded-full bg-red-100 text-red-700">
+                                    {event.hobby}
+                                  </span>
+                                </div>
+                                <p className="text-sm text-gray-500 mt-1 line-clamp-2">{event.description}</p>
+                                <div className="mt-2 flex items-center text-xs text-gray-500">
+                                  <Users className="h-3 w-3 mr-1" />
+                                  <span>{event.liveViewers} watching now</span>
+                                </div>
+                                <div className="mt-2 flex justify-end">
+                                  <Button 
+                                    size="sm"
+                                    className="bg-red-500 hover:bg-red-600"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      navigate(`/events/${event.id}`);
+                                    }}
+                                  >
+                                    Join Live
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Upcoming Events Section */}
+                    <div>
+                      <h3 className="text-sm font-medium flex items-center mb-3">
+                        <Calendar className="h-4 w-4 mr-1 text-blue-500" />
+                        {showLiveOnly ? 'No Other Events' : 'Upcoming Events'}
+                      </h3>
+                      <div className="space-y-3">
+                        {filteredEvents
+                          .filter(event => !event.isLive)
+                          .map(event => (
+                            <EventCard
+                              key={event.id}
+                              id={event.id}
+                              title={event.title}
+                              description={event.description}
+                              hobby={event.hobby}
+                              hobbyType={event.hobbyType}
+                              date={event.date}
+                              attendees={event.attendees}
+                              location={`${event.location.buildingName || 'Location'}`}
+                              distance={1.2} // This would be calculated from the user's location
+                            />
+                          ))}
+                      </div>
+                    </div>
+                  </div>
                 ) : (
                   <div className="text-center py-8 text-gray-500">
                     <Calendar className="mx-auto h-10 w-10 mb-2 opacity-50" />
@@ -524,6 +609,151 @@ const Dashboard = () => {
                       setSearchQuery('');
                       setSelectedHobby('All');
                       setDateFilter('all');
+                      setShowLiveOnly(false);
+                    }}>
+                      Reset filters
+                    </Button>
+                  </div>
+                )
+              ) : activeTab === 'places' ? (
+                filteredPlaces.length > 0 ? (
+                  <div className="space-y-4">
+                    {/* Places with Live Queues Section */}
+                    {filteredPlaces.some(place => place.liveQueue) && (
+                      <div className="mb-6">
+                        <h3 className="text-sm font-medium flex items-center mb-3">
+                          <Wifi className="h-4 w-4 mr-1 text-purple-500" />
+                          Places with Live Updates
+                        </h3>
+                        <div className="space-y-3">
+                          {filteredPlaces
+                            .filter(place => place.liveQueue)
+                            .map(place => (
+                              <div 
+                                key={place.id} 
+                                className={`p-3 border rounded-lg cursor-pointer transition-all hover:border-primary relative ${
+                                  selectedEvent === place.id ? 'border-primary bg-primary/5' : ''
+                                }`}
+                                onClick={() => setSelectedEvent(place.id)}
+                              >
+                                <div className="absolute -top-2 -right-2">
+                                  <Badge 
+                                    className={`
+                                      ${place.liveQueue?.status === 'low' ? 'bg-green-500' : 
+                                        place.liveQueue?.status === 'moderate' ? 'bg-amber-500' : 
+                                        place.liveQueue?.status === 'busy' ? 'bg-orange-500' : 'bg-red-500'} 
+                                      text-white
+                                    `}
+                                  >
+                                    {place.liveQueue?.status.toUpperCase()}
+                                  </Badge>
+                                </div>
+                                <div className="flex items-start justify-between">
+                                  <h3 className="font-medium">{place.title}</h3>
+                                  <span className={`text-xs px-2 py-1 rounded-full ${
+                                    place.category === 'restaurant' ? 'bg-amber-100 text-amber-700' :
+                                    place.category === 'cafe' ? 'bg-orange-100 text-orange-700' :
+                                    place.category === 'shop' ? 'bg-green-100 text-green-700' :
+                                    place.category === 'bar' ? 'bg-purple-100 text-purple-700' :
+                                    place.category === 'hotel' ? 'bg-blue-100 text-blue-700' :
+                                    place.category === 'school' ? 'bg-pink-100 text-pink-700' :
+                                    place.category === 'park' ? 'bg-yellow-100 text-yellow-700' :
+                                    place.category === 'landmark' ? 'bg-gray-100 text-gray-700' :
+                                    place.category === 'theater' ? 'bg-indigo-100 text-indigo-700' :
+                                    place.category === 'beach' ? 'bg-pink-100 text-pink-700' :
+                                    place.category === 'camping' ? 'bg-green-100 text-green-700' :
+                                    'bg-purple-100 text-purple-700'
+                                  }`}>
+                                    {place.category}
+                                  </span>
+                                </div>
+                                <p className="text-sm text-gray-500 mt-1 line-clamp-2">{place.description}</p>
+                                <div className="mt-2 flex justify-between items-center text-xs">
+                                  <span className="text-gray-500">
+                                    {place.liveQueue?.count} in queue • {place.liveQueue?.estimatedWaitTime} min wait
+                                  </span>
+                                  <Button 
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      navigate(`/places/${place.id}`);
+                                    }}
+                                  >
+                                    Details
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Other Places Section */}
+                    <div>
+                      <h3 className="text-sm font-medium flex items-center mb-3">
+                        <MapPin className="h-4 w-4 mr-1 text-blue-500" />
+                        All Places
+                      </h3>
+                      <div className="space-y-3">
+                        {filteredPlaces
+                          .filter(place => !place.liveQueue)
+                          .map(place => (
+                            <div 
+                              key={place.id} 
+                              className={`p-3 border rounded-lg cursor-pointer transition-all hover:border-primary ${
+                                selectedEvent === place.id ? 'border-primary bg-primary/5' : ''
+                              }`}
+                              onClick={() => setSelectedEvent(place.id)}
+                            >
+                              <div className="flex items-start justify-between">
+                                <h3 className="font-medium">{place.title}</h3>
+                                <span className={`text-xs px-2 py-1 rounded-full ${
+                                  place.type === 'myPlace' ? 'bg-blue-100 text-blue-700' : 
+                                  place.type === 'publicPlace' ? 'bg-amber-100 text-amber-700' :
+                                  place.type === 'property' ? 'bg-green-100 text-green-700' :
+                                  'bg-purple-100 text-purple-700'
+                                }`}>
+                                  {place.category || place.type}
+                                </span>
+                              </div>
+                              <p className="text-sm text-gray-500 mt-1 line-clamp-2">{place.description}</p>
+                              
+                              {place.location.buildingName && (
+                                <div className="mt-1 text-xs text-gray-500">
+                                  {place.location.buildingName}
+                                </div>
+                              )}
+                              
+                              {place.price && (
+                                <div className="mt-1 font-bold">${place.price.toLocaleString()}</div>
+                              )}
+                              
+                              <div className="mt-2 flex justify-end space-x-2">
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigate(`/places/${place.id}`);
+                                  }}
+                                >
+                                  Details
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <MapPin className="mx-auto h-10 w-10 mb-2 opacity-50" />
+                    <p>No places found matching your filters</p>
+                    <Button variant="link" onClick={() => {
+                      setSearchQuery('');
+                      setPlaceType('All');
+                      setPlaceCategory('All');
                     }}>
                       Reset filters
                     </Button>
