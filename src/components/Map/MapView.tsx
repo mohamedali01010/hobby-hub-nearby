@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap, Circle, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -11,7 +12,26 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle, DialogHeader } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import PlaceForm from '@/components/Places/PlaceForm';
-import { PlusCircle, Map as MapIcon } from 'lucide-react';
+import { PlusCircle, Map as MapIcon, Locate } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+
+// Helper functions
+// Calculate distance in kilometers between two points
+const calculateDistance = (point1: Location, point2: Location): number => {
+  const R = 6371; // Earth's radius in km
+  const dLat = toRad(point2.lat - point1.lat);
+  const dLon = toRad(point2.lng - point1.lng);
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(toRad(point1.lat)) * Math.cos(toRad(point2.lat)) * 
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+};
+
+const toRad = (value: number): number => {
+  return value * Math.PI / 180;
+};
 
 // Fix for default marker icons in Leaflet with Webpack/Vite
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
@@ -33,23 +53,6 @@ export interface Location {
   buildingName?: string;
 }
 
-// Helper to calculate distance in kilometers - MOVED UP before usage
-const calculateDistance = (point1: Location, point2: Location): number => {
-  const R = 6371; // Earth's radius in km
-  const dLat = toRad(point2.lat - point1.lat);
-  const dLon = toRad(point2.lng - point1.lng);
-  const a = 
-    Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(toRad(point1.lat)) * Math.cos(toRad(point2.lat)) * 
-    Math.sin(dLon/2) * Math.sin(dLon/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  return R * c;
-};
-
-const toRad = (value: number): number => {
-  return value * Math.PI / 180;
-};
-
 // Component for current location marker
 const CurrentLocationMarker = ({ location }: { location: Location | null }) => {
   if (!location) return null;
@@ -69,7 +72,7 @@ const CurrentLocationMarker = ({ location }: { location: Location | null }) => {
   );
 };
 
-// New component for area selection
+// Component for area selection
 const AreaSelector = ({ 
   enabled, 
   position, 
@@ -149,6 +152,19 @@ const MapClickHandler = ({
   );
 };
 
+// Component to handle map centering and zoom
+const MapManager = ({ location, zoomToLocation }: { location: Location | null, zoomToLocation: boolean }) => {
+  const map = useMap();
+  
+  useEffect(() => {
+    if (location && zoomToLocation) {
+      map.setView([location.lat, location.lng], 15);
+    }
+  }, [location, map, zoomToLocation]);
+  
+  return null;
+};
+
 export interface MapViewProps {
   events?: Event[];
   places?: Place[];
@@ -203,12 +219,16 @@ const MapView = ({
   const [selectedItem, setSelectedItem] = useState<MapMarkerItem | null>(null);
   const isMobile = useIsMobile();
   const navigate = useNavigate();
+  const { toast } = useToast();
   
   // Default location (New York City) until geolocation is available
   const [mapCenter, setMapCenter] = useState<Location>({
     lat: 40.7128,
     lng: -74.006
   });
+  
+  // State for zooming to user location
+  const [zoomToLocation, setZoomToLocation] = useState(false);
 
   // State for area selection mode
   const [areaSelectMode, setAreaSelectMode] = useState(false);
@@ -218,6 +238,9 @@ const MapView = ({
   const [newMarkerLocation, setNewMarkerLocation] = useState<NewLocationData | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [createDialogTab, setCreateDialogTab] = useState('place');
+  
+  // State for location details dialog
+  const [locationDetailsOpen, setLocationDetailsOpen] = useState(false);
 
   // Apply filters to events and places
   const filteredEvents = events.filter((event) => {
@@ -302,10 +325,27 @@ const MapView = ({
   const handleMarkerClick = (item: MapMarkerItem) => {
     setSelectedItem(item);
     
-    // If it's a place, offer navigation
+    // If it's a place, navigate to place details
     if ('type' in item && item.type === 'property') {
-      // If this is called from a popup button, the navigation is already handled elsewhere
-      console.log("Place marker clicked:", item);
+      toast({
+        title: item.title,
+        description: item.description,
+        action: (
+          <Button size="sm" variant="outline" onClick={() => navigate(`/places/${item.id}`)}>
+            View Details
+          </Button>
+        ),
+      });
+    } else if ('hobby' in item) {
+      toast({
+        title: item.title,
+        description: `${item.hobby} event on ${new Date(item.date).toLocaleDateString()}`,
+        action: (
+          <Button size="sm" variant="outline" onClick={() => navigate(`/events/${item.id}`)}>
+            View Details
+          </Button>
+        ),
+      });
     }
     
     if (onMarkerClick) {
@@ -321,6 +361,11 @@ const MapView = ({
   const handleAreaSelect = (center: [number, number], radius: number) => {
     setSelectedArea({ center, radius });
     setAreaSelectMode(false);
+    
+    toast({
+      title: "Area Selected",
+      description: `Selected area with radius of ${Math.round(radius)}m`,
+    });
   };
 
   const handleCreatePlace = (placeData: Place) => {
@@ -333,6 +378,11 @@ const MapView = ({
       onPlaceCreate(newPlace);
       setCreateDialogOpen(false);
       setNewMarkerLocation(null);
+      
+      toast({
+        title: "Place Created",
+        description: `Successfully created "${placeData.title}"`,
+      });
     }
   };
 
@@ -346,6 +396,25 @@ const MapView = ({
       onEventCreate(newEvent);
       setCreateDialogOpen(false);
       setNewMarkerLocation(null);
+      
+      toast({
+        title: "Event Created",
+        description: `Successfully created "${eventData.title}"`,
+      });
+    }
+  };
+
+  const handleLocateMe = () => {
+    if (location) {
+      setZoomToLocation(true);
+      // Reset after a short delay
+      setTimeout(() => setZoomToLocation(false), 1000);
+    } else {
+      toast({
+        title: "Location Error",
+        description: "Unable to access your location. Please check your browser permissions.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -375,6 +444,7 @@ const MapView = ({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         <CurrentLocationMarker location={location} />
+        <MapManager location={location} zoomToLocation={zoomToLocation} />
         
         {/* Handle map clicks and area selection */}
         <MapClickHandler 
@@ -424,8 +494,7 @@ const MapView = ({
                         className="mt-2 w-full" 
                         size="sm"
                         onClick={() => {
-                          // You would typically navigate to a page showing all events at this location
-                          console.log("View all events at", event.location);
+                          navigate("/events");
                         }}
                       >
                         View All Events
@@ -521,6 +590,28 @@ const MapView = ({
               <PlusCircle className="h-4 w-4" />
               Create Here
             </Button>
+            
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="w-full flex items-center gap-2"
+              onClick={handleLocateMe}
+            >
+              <Locate className="h-4 w-4" />
+              Locate Me
+            </Button>
+            
+            {location && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full flex items-center gap-2"
+                onClick={() => setLocationDetailsOpen(true)}
+              >
+                <MapIcon className="h-4 w-4" />
+                Location Info
+              </Button>
+            )}
           </div>
         </div>
       )}
@@ -576,6 +667,103 @@ const MapView = ({
               </div>
             </TabsContent>
           </Tabs>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Dialog for location details */}
+      <Dialog open={locationDetailsOpen} onOpenChange={setLocationDetailsOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Your Location Details</DialogTitle>
+          </DialogHeader>
+          
+          {location ? (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">Latitude</p>
+                  <p className="text-base">{location.lat.toFixed(6)}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">Longitude</p>
+                  <p className="text-base">{location.lng.toFixed(6)}</p>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Nearby Places</p>
+                {filteredPlaces.length > 0 ? (
+                  <div className="max-h-40 overflow-y-auto space-y-2">
+                    {filteredPlaces
+                      .sort((a, b) => {
+                        const distA = calculateDistance(location, a.location);
+                        const distB = calculateDistance(location, b.location);
+                        return distA - distB;
+                      })
+                      .slice(0, 3)
+                      .map(place => (
+                        <div key={place.id} className="border rounded p-2">
+                          <p className="font-medium">{place.title}</p>
+                          <p className="text-xs text-gray-500">
+                            {calculateDistance(location, place.location).toFixed(2)} km away
+                          </p>
+                          <Button 
+                            size="sm" 
+                            className="mt-1"
+                            onClick={() => {
+                              navigate(`/places/${place.id}`);
+                              setLocationDetailsOpen(false);
+                            }}
+                          >
+                            View Details
+                          </Button>
+                        </div>
+                      ))
+                    }
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500">No nearby places found</p>
+                )}
+              </div>
+              
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Upcoming Events</p>
+                {filteredEvents.length > 0 ? (
+                  <div className="max-h-40 overflow-y-auto space-y-2">
+                    {filteredEvents
+                      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                      .slice(0, 3)
+                      .map(event => (
+                        <div key={event.id} className="border rounded p-2">
+                          <p className="font-medium">{event.title}</p>
+                          <p className="text-xs text-gray-500">
+                            {event.hobby} · {new Date(event.date).toLocaleDateString()}
+                          </p>
+                          <Button 
+                            size="sm" 
+                            className="mt-1"
+                            onClick={() => {
+                              navigate(`/events/${event.id}`);
+                              setLocationDetailsOpen(false);
+                            }}
+                          >
+                            View Details
+                          </Button>
+                        </div>
+                      ))
+                    }
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500">No upcoming events found</p>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-4">
+              <p className="text-gray-500">Unable to access your location.</p>
+              <p className="text-gray-500">Please check your browser permissions.</p>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
