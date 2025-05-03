@@ -444,9 +444,9 @@ const MapMarker = ({ item, onClick, isSelected = false }: MapMarkerProps) => {
       if (item.category === 'bar') return <Beer className="h-4 w-4 mr-2" />;
       if (item.category === 'hotel') return <Hotel className="h-4 w-4 mr-2" />;
       if (item.category === 'school') return <School className="h-4 w-4 mr-2" />;
-      if (item.category === 'park') return <Landmark className="h-4 w-4 mr-2" />; // Changed from Park to Landmark
+      if (item.category === 'park') return <Landmark className="h-4 w-4 mr-2" />; 
       if (item.category === 'landmark') return <Landmark className="h-4 w-4 mr-2" />;
-      if (item.category === 'theater') return <Theater className="h-4 w-4 mr-2" />; // Changed Theatre to Theater
+      if (item.category === 'theater') return <Theater className="h-4 w-4 mr-2" />; 
       if (item.category === 'beach') return <Waves className="h-4 w-4 mr-2" />;
       if (item.category === 'camping') return <Tent className="h-4 w-4 mr-2" />;
       

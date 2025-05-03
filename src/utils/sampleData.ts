@@ -1,5 +1,4 @@
-
-import { Place, Event, EventType, PlaceCategory } from "@/components/Map/MapMarker";
+import { Place, Event, EventType, PlaceCategory, MarkerType, PlaceAction, Location } from "@/components/Map/MapMarker";
 
 // Helper function to generate a random location within a radius from a center point
 export const getRandomLocation = (center: { lat: number; lng: number }, radiusKm: number) => {
@@ -43,7 +42,7 @@ export const getRandomDate = (start: Date, end: Date) => {
 };
 
 // Generate sample events
-export const generateSampleEvents = (count: number, center: { lat: number; lng: number }): Event[] => {
+export const generateSampleEvents = (count: number, center: Location): Event[] => {
   const events: Event[] = [];
   
   const hobbyTypes = ['sports', 'arts', 'music', 'tech', 'outdoors', 'food', 'other'] as const;
@@ -61,7 +60,6 @@ export const generateSampleEvents = (count: number, center: { lat: number; lng: 
     "https://images.unsplash.com/photo-1542038784456-1ea8e935640e?q=80&w=2370",
     "https://images.unsplash.com/photo-1560090995-01632a28895b?q=80&w=2594",
     "https://images.unsplash.com/photo-1551958219-acbc608c6377?q=80&w=2940",
-    "https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=2944",
     "https://images.unsplash.com/photo-1555099962-4199c345e5dd?q=80&w=2940",
     "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=2940",
     "https://images.unsplash.com/photo-1581858726788-75bc0f6a952d?q=80&w=2787"
@@ -206,13 +204,13 @@ export const generateSampleEvents = (count: number, center: { lat: number; lng: 
 };
 
 // Generate sample places
-export const generateSamplePlaces = (count: number, center: { lat: number; lng: number }): Place[] => {
+export const generateSamplePlaces = (count: number, center: Location): Place[] => {
   const places: Place[] = [];
   
-  const placeTypes: MarkerType[] = ['myPlace', 'publicPlace', 'property', 'donation'];
-  const placeCategories: PlaceCategory[] = ['flat', 'restaurant', 'shop', 'villa', 'cafe', 'bar', 'hotel', 'school', 'park', 'landmark', 'theater', 'beach', 'camping'];
-  const placeActions = ['rent', 'sell', 'buy'];
-
+  const types: MarkerType[] = ['property', 'myPlace', 'publicPlace', 'donation'];
+  const categories: PlaceCategory[] = ['flat', 'restaurant', 'shop', 'villa', 'cafe', 'bar', 'hotel', 'school', 'park', 'landmark', 'theater', 'beach', 'camping'];
+  const actions: PlaceAction[] = ['rent', 'sell', 'buy'];
+  
   // Photo URLs for sample data
   const samplePhotos = [
     "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=2940",
@@ -245,9 +243,9 @@ export const generateSamplePlaces = (count: number, center: { lat: number; lng: 
 
   // Generate places with different categories
   for (let i = 0; i < count; i++) {
-    const type = placeTypes[Math.floor(Math.random() * placeTypes.length)];
-    const category = placeCategories[Math.floor(Math.random() * placeCategories.length)];
-    const action = type === 'property' ? placeActions[Math.floor(Math.random() * placeActions.length)] : undefined;
+    const type = types[Math.floor(Math.random() * types.length)];
+    const category = categories[Math.floor(Math.random() * categories.length)];
+    const action = type === 'property' ? actions[Math.floor(Math.random() * actions.length)] : undefined;
     const location = getRandomLocation(center, 10);
 
     // Select a title based on category
