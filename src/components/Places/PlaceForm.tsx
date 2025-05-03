@@ -38,7 +38,8 @@ const placeFormSchema = z.object({
   description: z.string().min(10, {
     message: "Description must be at least 10 characters.",
   }),
-  category: z.enum(['flat', 'villa', 'restaurant', 'shop'], {
+  // Updated to match the PlaceCategory type in MapMarker.tsx
+  category: z.enum(['flat', 'villa', 'restaurant', 'shop', 'cafe', 'bar', 'hotel', 'school', 'park', 'landmark', 'theater', 'beach', 'camping'] as const, {
     required_error: "You need to select a category.",
   }),
   action: z.enum(['rent', 'sell', 'buy'], {
@@ -250,6 +251,60 @@ const PlaceForm = ({ onSubmit, initialData }: PlaceFormProps) => {
                       <div className="flex items-center">
                         <Store className="h-4 w-4 mr-2 text-green-500" />
                         <span>Shop</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="cafe">
+                      <div className="flex items-center">
+                        <MapPin className="h-4 w-4 mr-2 text-yellow-500" />
+                        <span>Cafe</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="bar">
+                      <div className="flex items-center">
+                        <MapPin className="h-4 w-4 mr-2 text-red-500" />
+                        <span>Bar</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="hotel">
+                      <div className="flex items-center">
+                        <MapPin className="h-4 w-4 mr-2 text-pink-500" />
+                        <span>Hotel</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="school">
+                      <div className="flex items-center">
+                        <MapPin className="h-4 w-4 mr-2 text-blue-500" />
+                        <span>School</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="park">
+                      <div className="flex items-center">
+                        <MapPin className="h-4 w-4 mr-2 text-green-500" />
+                        <span>Park</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="landmark">
+                      <div className="flex items-center">
+                        <MapPin className="h-4 w-4 mr-2 text-blue-500" />
+                        <span>Landmark</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="theater">
+                      <div className="flex items-center">
+                        <MapPin className="h-4 w-4 mr-2 text-blue-500" />
+                        <span>Theater</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="beach">
+                      <div className="flex items-center">
+                        <MapPin className="h-4 w-4 mr-2 text-blue-500" />
+                        <span>Beach</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="camping">
+                      <div className="flex items-center">
+                        <MapPin className="h-4 w-4 mr-2 text-blue-500" />
+                        <span>Camping</span>
                       </div>
                     </SelectItem>
                   </SelectContent>

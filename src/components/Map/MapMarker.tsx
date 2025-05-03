@@ -1,8 +1,11 @@
-
 import { Marker, Popup } from 'react-leaflet';
 import { Icon } from 'leaflet';
 import { Link } from 'react-router-dom';
-import { Users, Calendar, MapPin, Home, Store, Gift, Map, Building, UtensilsCrossed, Store as Shop, Music, Book, Camera, Mic, Palette, Utensils, Coffee, Beer, Basketball, Trophy, Heart, Star, Park, Ticket, School, Landmark, Hotel, Theatre, Waves, Tent, Plane } from 'lucide-react';
+import { 
+  Users, Calendar, MapPin, Home, Store, Gift, Map, Building, UtensilsCrossed, 
+  Music, Book, Camera, Mic, Palette, Utensils, Coffee, Beer, Trophy, Heart, 
+  Star, Ticket, School, Landmark, Hotel, Theater, Waves, Tent, Plane 
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
@@ -419,7 +422,7 @@ const MapMarker = ({ item, onClick, isSelected = false }: MapMarkerProps) => {
   // Get appropriate icon based on event type or place category for popup
   const getIcon = () => {
     if (isEvent(item)) {
-      if (item.eventType === 'football' || item.eventType === 'sports') return <Basketball className="h-4 w-4 mr-2" />;
+      if (item.eventType === 'football' || item.eventType === 'sports') return <Trophy className="h-4 w-4 mr-2" />;
       if (item.eventType === 'swimming') return <Waves className="h-4 w-4 mr-2" />;
       if (item.eventType === 'rent') return <Home className="h-4 w-4 mr-2" />;
       if (item.eventType === 'concert') return <Music className="h-4 w-4 mr-2" />;
@@ -436,14 +439,14 @@ const MapMarker = ({ item, onClick, isSelected = false }: MapMarkerProps) => {
       if (item.category === 'flat') return <Building className="h-4 w-4 mr-2" />;
       if (item.category === 'villa') return <Home className="h-4 w-4 mr-2" />;
       if (item.category === 'restaurant') return <UtensilsCrossed className="h-4 w-4 mr-2" />;
-      if (item.category === 'shop') return <Shop className="h-4 w-4 mr-2" />;
+      if (item.category === 'shop') return <Store className="h-4 w-4 mr-2" />;
       if (item.category === 'cafe') return <Coffee className="h-4 w-4 mr-2" />;
       if (item.category === 'bar') return <Beer className="h-4 w-4 mr-2" />;
       if (item.category === 'hotel') return <Hotel className="h-4 w-4 mr-2" />;
       if (item.category === 'school') return <School className="h-4 w-4 mr-2" />;
-      if (item.category === 'park') return <Park className="h-4 w-4 mr-2" />;
+      if (item.category === 'park') return <Landmark className="h-4 w-4 mr-2" />; // Changed from Park to Landmark
       if (item.category === 'landmark') return <Landmark className="h-4 w-4 mr-2" />;
-      if (item.category === 'theater') return <Theatre className="h-4 w-4 mr-2" />;
+      if (item.category === 'theater') return <Theater className="h-4 w-4 mr-2" />; // Changed Theatre to Theater
       if (item.category === 'beach') return <Waves className="h-4 w-4 mr-2" />;
       if (item.category === 'camping') return <Tent className="h-4 w-4 mr-2" />;
       
