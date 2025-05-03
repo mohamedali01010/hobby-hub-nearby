@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -99,8 +98,8 @@ const Places = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       
-      <div className="flex-grow flex flex-col md:flex-row">
-        <div className="w-full md:w-1/3 lg:w-1/4 p-4 border-r">
+      <div className="flex-grow flex flex-col md:flex-row h-[calc(100vh-4rem)] overflow-hidden">
+        <div className="w-full md:w-1/3 lg:w-1/4 p-4 border-r overflow-y-auto">
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-xl font-bold">Places</h1>
             
@@ -211,11 +210,11 @@ const Places = () => {
           </div>
         </div>
         
-        <div className="flex-grow relative">
+        <div className="flex-grow relative overflow-hidden">
           <MapView 
             places={places} 
             onMarkerClick={handleMarkerClick}
-            height="h-[calc(100vh-4rem)]"
+            height="h-full"
             filterType={activeTab === 'all' ? undefined : 
                          activeTab === 'myPlaces' ? 'myPlace' :
                          activeTab === 'properties' ? 'property' :

@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap, Circle, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -203,7 +202,7 @@ const MapView = ({
   events = [], 
   places = [],
   onMarkerClick, 
-  height = "h-[calc(100vh-4rem)]",
+  height = "h-full",
   showControls = true,
   filterHobby,
   filterType,
@@ -616,13 +615,15 @@ const MapView = ({
         </div>
       )}
 
-      <MapContainer 
-        center={[mapCenter.lat, mapCenter.lng]} 
-        zoom={13} 
-        style={{ height: '100%', width: '100%' }}
-      >
-        <MapContent />
-      </MapContainer>
+      <div className="absolute inset-0">
+        <MapContainer 
+          center={[mapCenter.lat, mapCenter.lng]} 
+          zoom={13} 
+          style={{ height: '100%', width: '100%' }}
+        >
+          <MapContent />
+        </MapContainer>
+      </div>
 
       {/* Dialog for creating new places or events */}
       <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>

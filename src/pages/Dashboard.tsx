@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -474,8 +473,8 @@ const Dashboard = () => {
         
         {/* Main Content */}
         <div className="relative flex-grow flex">
-          {/* Map Container */}
-          <div className="absolute inset-0">
+          {/* Map Container - Now wrapped in a div with relative positioning */}
+          <div className="relative flex-grow overflow-hidden">
             <MapView 
               events={filteredEvents}
               places={samplePlaces} 
@@ -486,8 +485,8 @@ const Dashboard = () => {
             />
           </div>
           
-          {/* Results Panel (Right Side) */}
-          <div className="relative z-10 w-80 bg-white shadow-md ml-auto h-[calc(100vh-4rem)] flex flex-col">
+          {/* Results Panel (Right Side) - Absolute positioning removed */}
+          <div className="z-10 w-80 bg-white shadow-md h-[calc(100vh-4rem)] flex flex-col overflow-hidden">
             <div className="px-4 py-3 border-b flex items-center justify-between">
               <h2 className="font-semibold text-lg">
                 {activeTab === 'events' ? 'Events' : 'People'}
@@ -500,7 +499,7 @@ const Dashboard = () => {
             </div>
             
             {/* Results List */}
-            <div className="p-4 overflow-y-auto flex-grow space-y-4">
+            <div className="p-4 overflow-y-auto flex-grow">
               {activeTab === 'events' ? (
                 filteredEvents.length > 0 ? (
                   filteredEvents.map(event => (
