@@ -142,7 +142,7 @@ const createMarkerIcon = (type: MarkerType | string, hobbyType: string = 'other'
       svgPath = `<circle cx="16" cy="10" r="9" fill="${color}"${liveEffect}/>
                  <circle cx="13" cy="9" r="2" fill="white"/>
                  <circle cx="19" cy="9" r="2" fill="white"/>
-                 <path fill="white" d="M16 12c-2 0-5 1-5 3h10c0-2-3-3-5-3z"/>`;
+                 <path fill="white" d="M16 12c-2 0-5 1-5 3h10c0-2-3-3-5-3s-.8.2-1 .5c-.1.3-.5.5-1 .5s-.9-.2-1-.5c-.2-.3-.5-.5-1-.5s-.8.2-1 .5c-.1.3-.5.5-1 .5-.8 0-1.5-.7-1.5-1.5S11.2 6 12 6s1.5.7 1.5 1.5c0 .3.1.5.4.6.3.1.5.1.7-.1.1-.1.3-.2.4-.4.1-.1.1-.2.2-.4.2-.3.5-.5.9-.5.6 0 1.1.4 1.3 1 .1.2.3.3.6.3.3 0 .5-.1.6-.3.2-.6.7-1 1.3-1 .8 0 1.5.7 1.5 1.5S20.8 9 20 9z"/>`;
     } else if (eventType === 'party') {
       svgPath = `<circle cx="16" cy="10" r="9" fill="${color}"${liveEffect}/>
                  <path fill="white" d="M16 5l1 3h3l-2.5 1.8 1 3.2L16 11l-2.5 2 1-3.2L12 8h3z"/>
@@ -239,4 +239,224 @@ const createMarkerIcon = (type: MarkerType | string, hobbyType: string = 'other'
                <path fill="white" d="M13 14h6v2h-6z"/>`;
   } else if (type === 'event') {
     // Standard event icon
-    svgPath = `<path fill="${color}" d="M16 0c-5.523 0-10 4.477-10 10 0 10 10 22 10 22s10-12 10-22c0-5.523-4.477-10-10-10zm0 16.5a6.5 6.5 0 1 1 0-13 6.5 6.5 0 0 1 0
+    svgPath = `<path fill="${color}" d="M16 0c-5.523 0-10 4.477-10 10 0 10 10 22 10 22s10-12 10-22c0-5.523-4.477-10-10-10zm0 16.5a6.5 6.5 0 1 1 0-13 6.5 6.5 0 0 1 0 13z"${liveEffect}/>`;
+  }
+
+  // Create a div element to hold the SVG
+  const svgIcon = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 42">
+      ${svgPath}
+    </svg>
+  `;
+  
+  // Create custom icon using leaflet Icon
+  return new Icon({
+    iconUrl: `data:image/svg+xml;base64,${btoa(svgIcon)}`,
+    iconSize: [32, 42],
+    iconAnchor: [16, 42],
+    popupAnchor: [0, -42],
+    className: `${isLive ? 'live-pulse' : ''} ${isSelected ? 'marker-bounce' : ''}`,
+  });
+};
+
+// Location data interface
+export interface Location {
+  lat: number;
+  lng: number;
+  buildingName?: string;
+  floor?: number;
+  apartmentNumber?: string;
+}
+
+// Live queue information interface
+export interface LiveQueue {
+  count: number;
+  estimatedWaitTime: number; // in minutes
+  lastUpdated: string; // ISO date string
+  status: 'low' | 'moderate' | 'busy' | 'very-busy';
+}
+
+// Event interface for events on the map
+export interface Event {
+  id: string;
+  title: string;
+  description?: string;
+  location: Location;
+  hobby: string;
+  hobbyType: string;
+  date: string; // ISO date string
+  attendees: number;
+  eventType?: EventType;
+  isEnhanced?: boolean;
+  isLive?: boolean;
+}
+
+// Place interface for locations on the map
+export interface Place {
+  id: string;
+  title: string;
+  description?: string;
+  location: Location;
+  type: MarkerType;
+  category?: PlaceCategory;
+  isOwner: boolean;
+  action?: PlaceAction;
+  liveQueue?: LiveQueue;
+  hostedEvents?: {
+    id: string;
+    title: string;
+    hobby: string;
+    hobbyType: string;
+    eventType?: EventType;
+    date: string;
+    attendees: number;
+  }[];
+}
+
+// Combined type for all map markers
+export type MapMarkerItem = Event | Place;
+
+// Interface for the markers on the map
+interface MapMarkerProps {
+  item: MapMarkerItem;
+  isSelected?: boolean;
+  onClick: (item: MapMarkerItem) => void;
+  filterHobby?: string;
+}
+
+// Main component for rendering markers on the map
+const MapMarker = ({ item, isSelected = false, onClick, filterHobby }: MapMarkerProps) => {
+  // Helper function to determine if the marker should be visible based on filter
+  const isVisible = () => {
+    // If no filter, show all markers
+    if (!filterHobby) return true;
+    
+    // For events, check the hobby
+    if ('hobby' in item) {
+      return item.hobby === filterHobby;
+    }
+    
+    // For places with hosted events, check if any events match the hobby
+    if (item.hostedEvents && item.hostedEvents.length > 0) {
+      return item.hostedEvents.some(event => event.hobby === filterHobby);
+    }
+    
+    // Otherwise, show all places
+    return true;
+  };
+  
+  // If marker shouldn't be visible due to filters, don't render
+  if (!isVisible()) return null;
+  
+  // Create the appropriate icon based on item type
+  const getIcon = () => {
+    if ('hobby' in item) {
+      // It's an event
+      return createMarkerIcon(
+        'event', 
+        item.hobbyType, 
+        isSelected, 
+        item.isEnhanced, 
+        item.eventType,
+        undefined,
+        item.isLive
+      );
+    } else {
+      // It's a place
+      return createMarkerIcon(
+        item.type,
+        undefined,
+        isSelected,
+        false,
+        undefined,
+        item.category,
+        item.liveQueue ? true : false
+      );
+    }
+  };
+  
+  // Get position for the marker
+  const position: [number, number] = [item.location.lat, item.location.lng];
+  
+  // Render the marker with appropriate popup
+  return (
+    <Marker 
+      position={position} 
+      icon={getIcon()} 
+      eventHandlers={{
+        click: () => onClick(item)
+      }}
+    >
+      <Popup>
+        <div className="w-64 p-0">
+          <div className="bg-primary text-white p-2 rounded-t-lg flex justify-between items-center">
+            <h3 className="font-semibold text-sm">{item.title}</h3>
+            {'hobby' in item && (
+              <Badge variant="outline" className="bg-white/20 text-white text-xs">
+                {item.hobby}
+              </Badge>
+            )}
+          </div>
+          
+          <div className="p-3">
+            {item.description && (
+              <p className="text-xs text-gray-600 mb-2">{item.description}</p>
+            )}
+            
+            <div className="flex flex-col space-y-1 mb-2">
+              <div className="flex items-center text-xs">
+                <MapPin className="h-3 w-3 mr-1 text-gray-500" />
+                <span>
+                  {item.location.buildingName || "Unknown location"}
+                  {item.location.floor && `, Floor ${item.location.floor}`}
+                  {item.location.apartmentNumber && `, Apt ${item.location.apartmentNumber}`}
+                </span>
+              </div>
+              
+              {'hobby' in item && (
+                <>
+                  <div className="flex items-center text-xs">
+                    <Calendar className="h-3 w-3 mr-1 text-gray-500" />
+                    <span>{new Date(item.date).toLocaleString()}</span>
+                  </div>
+                  
+                  <div className="flex items-center text-xs">
+                    <Users className="h-3 w-3 mr-1 text-gray-500" />
+                    <span>{item.attendees} attending</span>
+                  </div>
+                </>
+              )}
+              
+              {item.liveQueue && (
+                <div className="flex items-center justify-between text-xs font-semibold mt-1">
+                  <span className="live-indicator">Live Queue</span>
+                  <span className={`
+                    ${item.liveQueue.status === 'very-busy' ? 'text-red-500' : 
+                      item.liveQueue.status === 'busy' ? 'text-orange-500' : 
+                      'text-yellow-500'}
+                  `}>
+                    {item.liveQueue.count} people ({item.liveQueue.estimatedWaitTime} min wait)
+                  </span>
+                </div>
+              )}
+            </div>
+            
+            <div className="flex justify-end mt-2">
+              <Button 
+                variant="outline" 
+                size="sm"
+                asChild
+              >
+                <Link to={`${'hobby' in item ? `/events/${item.id}` : `/places/${item.id}`}`}>
+                  View Details
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </Popup>
+    </Marker>
+  );
+};
+
+export default MapMarker;
