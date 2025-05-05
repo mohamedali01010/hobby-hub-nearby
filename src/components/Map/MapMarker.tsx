@@ -1,3 +1,4 @@
+
 import { Marker, Popup } from 'react-leaflet';
 import { Icon } from 'leaflet';
 import { Link } from 'react-router-dom';
@@ -266,6 +267,26 @@ export interface Location {
   buildingName?: string;
   floor?: number;
   apartmentNumber?: string;
+  unit?: string; // Added property
+}
+
+// Broker information interface
+export interface BrokerInfo {
+  id: string;
+  name: string;
+  rating: number;
+  commissionsRate: number;
+  photoUrl?: string;
+}
+
+// Deliverer information interface
+export interface DelivererInfo {
+  id: string;
+  name: string;
+  rating: number;
+  deliveryFee: number;
+  deliveryArea?: string;
+  photoUrl?: string;
 }
 
 // Live queue information interface
@@ -289,6 +310,8 @@ export interface Event {
   eventType?: EventType;
   isEnhanced?: boolean;
   isLive?: boolean;
+  placeId?: string; // Added property to link with Place
+  liveViewers?: number; // Added property
 }
 
 // Place interface for locations on the map
@@ -302,6 +325,11 @@ export interface Place {
   isOwner: boolean;
   action?: PlaceAction;
   liveQueue?: LiveQueue;
+  broker?: BrokerInfo; // Added property
+  deliverer?: DelivererInfo; // Added property
+  price?: number; // Added property
+  area?: number; // Added property
+  photos?: string[]; // Added property
   hostedEvents?: {
     id: string;
     title: string;
@@ -359,10 +387,12 @@ const MapMarker = ({ item, isSelected = false, onClick, filterHobby }: MapMarker
         item.isEnhanced, 
         item.eventType,
         undefined,
-        item.isLive
+        item.isLive || false
       );
     } else {
       // It's a place
+      const hasLiveQueue = 'liveQueue' in item && item.liveQueue ? true : false;
+      
       return createMarkerIcon(
         item.type,
         undefined,
@@ -370,7 +400,7 @@ const MapMarker = ({ item, isSelected = false, onClick, filterHobby }: MapMarker
         false,
         undefined,
         item.category,
-        item.liveQueue ? true : false
+        hasLiveQueue
       );
     }
   };
@@ -427,7 +457,7 @@ const MapMarker = ({ item, isSelected = false, onClick, filterHobby }: MapMarker
                 </>
               )}
               
-              {item.liveQueue && (
+              {'liveQueue' in item && item.liveQueue && (
                 <div className="flex items-center justify-between text-xs font-semibold mt-1">
                   <span className="live-indicator">Live Queue</span>
                   <span className={`

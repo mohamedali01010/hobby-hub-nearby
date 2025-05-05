@@ -241,6 +241,23 @@ const MapView = ({
   // State for location details dialog
   const [locationDetailsOpen, setLocationDetailsOpen] = useState(false);
 
+  // Helper functions to filter places
+  const filterPlacesByBrokerRating = (places: Place[], minRating: number | undefined): Place[] => {
+    if (!minRating) return places;
+    
+    return places.filter(place => 
+      place.broker !== undefined && place.broker.rating >= minRating
+    );
+  };
+
+  const filterPlacesByDelivererRating = (places: Place[], minRating: number | undefined): Place[] => {
+    if (!minRating) return places;
+    
+    return places.filter(place => 
+      place.deliverer !== undefined && place.deliverer.rating >= minRating
+    );
+  };
+
   // Apply filters to events and places
   const filteredEvents = events.filter((event) => {
     // Filter by hobby if specified
@@ -271,7 +288,7 @@ const MapView = ({
     return true;
   });
   
-  const filteredPlaces = places.filter((place) => {
+  let filteredPlaces = places.filter((place) => {
     // Filter by type if specified
     if (filterType && filterType !== 'All' && place.type !== filterType) {
       return false;
@@ -284,16 +301,6 @@ const MapView = ({
     
     // Filter by action if specified (rent, sell, buy)
     if (filterAction && filterAction !== 'All' && place.action !== filterAction) {
-      return false;
-    }
-    
-    // Filter by broker rating if specified
-    if (filterBrokerRating && place.broker && place.broker.rating < filterBrokerRating) {
-      return false;
-    }
-    
-    // Filter by deliverer rating if specified
-    if (filterDelivererRating && place.deliverer && place.deliverer.rating < filterDelivererRating) {
       return false;
     }
     
@@ -314,6 +321,10 @@ const MapView = ({
     
     return true;
   });
+
+  // Apply broker and deliverer rating filters
+  filteredPlaces = filterPlacesByBrokerRating(filteredPlaces, filterBrokerRating);
+  filteredPlaces = filterPlacesByDelivererRating(filteredPlaces, filterDelivererRating);
 
   useEffect(() => {
     if (location) {

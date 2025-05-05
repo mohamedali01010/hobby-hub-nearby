@@ -1,918 +1,1469 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Slider } from "@/components/ui/slider";
+import { 
+  Calendar, Users, MapPin, Clock, Star, Heart, 
+  ChevronRight, Filter, Plus, Bell, Settings, 
+  User, LogOut, Search, Menu, X, Home, Map as MapIcon,
+  MessageSquare, CalendarDays, UserPlus, Briefcase, Building,
+  UtensilsCrossed, Store, DollarSign, SquareFeet, Eye
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Search, Filter, Calendar, MapPin, Map, Plus, Users, X, Radio, Flame, Wifi } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import Navbar from '@/components/UI/Navbar';
-import MapView from '@/components/Map/MapView';
-import EventCard from '@/components/Events/EventCard';
-import UserCard from '@/components/Users/UserCard';
-import HobbyTag from '@/components/UI/HobbyTag';
-import { useAuth } from '@/context/AuthContext';
-import { useGeolocation } from '@/hooks/useGeolocation';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { useToast } from '@/hooks/use-toast';
-import { generateSampleEvents, generateSamplePlaces } from '@/utils/sampleData';
+import { Card, CardContent } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { EventProvider } from '@/context/EventContext';
+import { Input } from '@/components/ui/input';
+import { 
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, 
+  DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger 
+} from '@/components/ui/dropdown-menu';
+import { 
+  Dialog, DialogContent, DialogDescription, DialogHeader, 
+  DialogTitle, DialogTrigger, DialogFooter 
+} from '@/components/ui/dialog';
+import { useToast } from '@/components/ui/use-toast';
+import { useAuth } from '@/context/AuthContext';
 import { useEvents } from '@/context/EventContext';
-import EventHistory from '@/components/Events/EventHistory';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { CalendarClock } from 'lucide-react';
+import { Event, Place } from '@/components/Map/MapMarker';
+import MapView from '@/components/Map/MapView';
+import { Progress } from '@/components/ui/progress';
+import { Separator } from '@/components/ui/separator';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
-// Available hobby filters
-const hobbyFilters = [
-  { name: 'All', type: 'all' as const },
-  { name: 'Football', type: 'sports' as const },
-  { name: 'Basketball', type: 'sports' as const },
-  { name: 'Swimming', type: 'sports' as const },
-  { name: 'Photography', type: 'arts' as const },
-  { name: 'Painting', type: 'arts' as const },
-  { name: 'Guitar', type: 'music' as const },
-  { name: 'Programming', type: 'tech' as const },
-  { name: 'Hiking', type: 'outdoors' as const },
-  { name: 'Cooking', type: 'food' as const },
-  { name: 'Property', type: 'other' as const },
-];
-
-// Place type filters
-const placeTypeFilters = [
-  { name: 'All', type: 'all' },
-  { name: 'My Places', type: 'myPlace' },
-  { name: 'Public Places', type: 'publicPlace' },
-  { name: 'Properties', type: 'property' },
-  { name: 'Donations', type: 'donation' },
-];
-
-// Place category filters
-const placeCategoryFilters = [
-  { name: 'All', type: 'all' },
-  { name: 'Flats', type: 'flat' },
-  { name: 'Villas', type: 'villa' },
-  { name: 'Restaurants', type: 'restaurant' },
-  { name: 'Shops', type: 'shop' },
-  { name: 'Cafes', type: 'cafe' },
-  { name: 'Bars', type: 'bar' },
-  { name: 'Hotels', type: 'hotel' },
-  { name: 'Schools', type: 'school' },
-  { name: 'Parks', type: 'park' },
-  { name: 'Landmarks', type: 'landmark' },
-  { name: 'Theaters', type: 'theater' },
-  { name: 'Beaches', type: 'beach' },
-  { name: 'Camping', type: 'camping' },
-];
-
-// Sample user data
-const sampleUsers = [
+// Sample data for dashboard
+const sampleEvents: Event[] = [
   {
     id: '1',
-    name: 'John Doe',
-    avatar: 'https://i.pravatar.cc/300?img=1',
-    bio: 'Football enthusiast and weekend photographer. Always up for a game or a photo walk!',
-    location: 'London, UK',
-    hobbies: [
-      { name: 'Football', type: 'sports' as const },
-      { name: 'Photography', type: 'arts' as const },
-    ],
-    distance: 0.5,
-    commonHobbies: 2,
+    title: 'Football Match',
+    description: 'Weekly football match at the local park. All skill levels welcome!',
+    location: { lat: 51.505, lng: -0.09, buildingName: 'Central Park' },
+    hobby: 'sports',
+    hobbyType: 'sports',
+    eventType: 'football',
+    date: new Date(Date.now() + 86400000).toISOString(), // Tomorrow
+    attendees: 12,
+    isLive: true,
+    liveViewers: 24
   },
   {
     id: '2',
-    name: 'Jane Smith',
-    avatar: 'https://i.pravatar.cc/300?img=2',
-    bio: 'Guitar player and hiker. Love to explore new trails and jam with fellow musicians.',
-    location: 'London, UK',
-    hobbies: [
-      { name: 'Guitar', type: 'music' as const },
-      { name: 'Hiking', type: 'outdoors' as const },
-    ],
-    distance: 1.2,
-    commonHobbies: 1,
+    title: 'Art Exhibition',
+    description: 'Local artists showcase their latest works. Free entry.',
+    location: { lat: 51.51, lng: -0.1, buildingName: 'City Gallery', floor: 2 },
+    hobby: 'arts',
+    hobbyType: 'arts',
+    eventType: 'exhibition',
+    date: new Date(Date.now() + 172800000).toISOString(), // Day after tomorrow
+    attendees: 45,
+    isEnhanced: true
   },
   {
     id: '3',
-    name: 'Alex Johnson',
-    avatar: 'https://i.pravatar.cc/300?img=3',
-    bio: 'Tech enthusiast and amateur chef. Always coding something new or experimenting in the kitchen.',
-    location: 'London, UK',
-    hobbies: [
-      { name: 'Programming', type: 'tech' as const },
-      { name: 'Cooking', type: 'food' as const },
-    ],
-    distance: 2.5,
-    commonHobbies: 1,
+    title: 'Tech Meetup',
+    description: 'Monthly gathering of tech enthusiasts. This month: AI and Machine Learning.',
+    location: { lat: 51.515, lng: -0.09, buildingName: 'Innovation Hub', floor: 1 },
+    hobby: 'tech',
+    hobbyType: 'tech',
+    eventType: 'meetup',
+    date: new Date(Date.now() + 259200000).toISOString(), // 3 days from now
+    attendees: 32
   },
+  {
+    id: '4',
+    title: 'Jazz Night',
+    description: 'Live jazz performance featuring local musicians.',
+    location: { lat: 51.52, lng: -0.1, buildingName: 'Blue Note Club' },
+    hobby: 'music',
+    hobbyType: 'music',
+    eventType: 'concert',
+    date: new Date(Date.now() + 345600000).toISOString(), // 4 days from now
+    attendees: 78,
+    isLive: true,
+    liveViewers: 156
+  },
+  {
+    id: '5',
+    title: 'Cooking Workshop',
+    description: 'Learn to cook authentic Italian pasta from a professional chef.',
+    location: { lat: 51.51, lng: -0.08, buildingName: 'Culinary Institute', floor: 3 },
+    hobby: 'food',
+    hobbyType: 'food',
+    eventType: 'workshop',
+    date: new Date(Date.now() + 432000000).toISOString(), // 5 days from now
+    attendees: 15
+  }
 ];
 
-// Extract the DashboardContent component to use the EventContext
-const DashboardContent = () => {
-  const { isAuthenticated, user } = useAuth();
-  const navigate = useNavigate();
-  const { location } = useGeolocation();
-  const isMobile = useIsMobile();
-  const { toast } = useToast();
-  const { displayedEvents, friendEvents, suggestedEvents, pastEvents, filterEvents, markEventComplete } = useEvents();
-  
-  const [activeTab, setActiveTab] = useState('events');
-  const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedHobby, setSelectedHobby] = useState<string>('All');
-  const [placeType, setPlaceType] = useState<string>('All');
-  const [placeCategory, setPlaceCategory] = useState<string>('All');
-  const [maxDistance, setMaxDistance] = useState([10]); // km
-  const [dateFilter, setDateFilter] = useState('all'); // all, today, tomorrow, this-week
-  const [selectedEvent, setSelectedEvent] = useState<string | null>(null);
-  const [showLiveOnly, setShowLiveOnly] = useState(false);
-  const [filterMode, setFilterMode] = useState<'all' | 'friends' | 'suggested'>('all');
-  const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
-  
-  // Generate the sample data when component loads
-  const [places, setPlaces] = useState(() => {
-    const defaultLocation = { lat: 51.505, lng: -0.09 };
-    const center = location || defaultLocation;
-    return generateSamplePlaces(20, center);
-  });
-  
-  // Update sample data if location changes
-  useEffect(() => {
-    if (location) {
-      setPlaces(generateSamplePlaces(20, location));
-    }
-  }, [location]);
-  
-  // Apply filters when filter state changes
-  useEffect(() => {
-    filterEvents({
-      showAll: filterMode === 'all',
-      showFriendsOnly: filterMode === 'friends',
-      showSuggestedOnly: filterMode === 'suggested',
-      hobby: selectedHobby !== 'All' ? selectedHobby : undefined,
-      dateRange: dateFilter !== 'all' ? dateFilter as ('today' | 'tomorrow' | 'this-week') : undefined,
-      distance: maxDistance[0],
-      liveOnly: showLiveOnly
-    });
-  }, [filterMode, selectedHobby, dateFilter, maxDistance, showLiveOnly, filterEvents]);
-  
-  // Apply filters to places
-  const filteredPlaces = places.filter(place => {
-    // Apply type filter
-    if (placeType !== 'All' && place.type !== placeType) return false;
-    
-    // Apply category filter
-    if (placeCategory !== 'All' && place.category !== placeCategory) return false;
-    
-    // Apply search filter
-    if (searchQuery && !place.title.toLowerCase().includes(searchQuery.toLowerCase()) && 
-        !place.description.toLowerCase().includes(searchQuery.toLowerCase())) return false;
-    
-    // Apply distance filter (pending implementation)
-    
-    return true;
-  });
-  
-  // Apply filters to users
-  const filteredUsers = sampleUsers.filter(user => {
-    // Apply hobby filter
-    if (selectedHobby !== 'All' && !user.hobbies.some(h => h.name === selectedHobby)) return false;
-    
-    // Apply search filter
-    if (searchQuery && !user.name.toLowerCase().includes(searchQuery.toLowerCase()) && 
-        !user.bio.toLowerCase().includes(searchQuery.toLowerCase()) &&
-        !user.hobbies.some(h => h.name.toLowerCase().includes(searchQuery.toLowerCase()))) return false;
-    
-    // Apply distance filter
-    if (user.distance > maxDistance[0]) return false;
-    
-    return true;
-  });
+const samplePlaces: Place[] = [
+  {
+    id: '1',
+    title: 'Modern Studio Apartment',
+    description: 'Cozy studio apartment in downtown, perfect for professionals.',
+    location: { lat: 51.505, lng: -0.09, floor: 3, unit: 'B4', buildingName: 'Riverside Apartments' },
+    type: 'property',
+    isOwner: true,
+    category: 'flat',
+    action: 'rent',
+    price: 1200,
+    area: 45
+  },
+  {
+    id: '2',
+    title: 'Family Villa with Garden',
+    description: 'Spacious family villa with beautiful garden and swimming pool.',
+    location: { lat: 51.51, lng: -0.1, buildingName: 'Palm Estate' },
+    type: 'property',
+    isOwner: true,
+    category: 'villa',
+    action: 'sell',
+    price: 450000,
+    area: 180
+  },
+  {
+    id: '3',
+    title: 'Italian Restaurant',
+    description: 'Authentic Italian cuisine in the heart of the city.',
+    location: { lat: 51.497, lng: -0.07, unit: '101', buildingName: 'Corner Plaza' },
+    type: 'property',
+    isOwner: false,
+    category: 'restaurant',
+    action: 'rent',
+    price: 3500,
+    area: 120
+  }
+];
 
-  const handleMarkerClick = (item: any) => {
-    // When a marker is clicked on the map
-    setSelectedEvent(item.id);
-    
-    if ('hobby' in item) {
-      toast({
-        title: item.title,
-        description: `${item.hobby} event on ${new Date(item.date).toLocaleDateString()}`,
-        action: (
-          <Button size="sm" variant="outline" onClick={() => navigate(`/events/${item.id}`)}>
-            View Details
-          </Button>
-        ),
-      });
+const sampleMessages = [
+  {
+    id: '1',
+    sender: 'John Doe',
+    avatar: '/placeholder.svg',
+    message: 'Hey, are you coming to the football match tomorrow?',
+    time: '10:30 AM',
+    unread: true
+  },
+  {
+    id: '2',
+    sender: 'Jane Smith',
+    avatar: '/placeholder.svg',
+    message: 'I listed my apartment for rent. Can you check it out?',
+    time: 'Yesterday',
+    unread: false
+  },
+  {
+    id: '3',
+    sender: 'Mike Johnson',
+    avatar: '/placeholder.svg',
+    message: 'Thanks for organizing the tech meetup. It was great!',
+    time: '2 days ago',
+    unread: false
+  }
+];
+
+const sampleNotifications = [
+  {
+    id: '1',
+    title: 'New Event Nearby',
+    description: 'Football match tomorrow at Central Park',
+    time: '1 hour ago',
+    unread: true
+  },
+  {
+    id: '2',
+    title: 'Friend Request',
+    description: 'Jane Smith wants to connect',
+    time: 'Yesterday',
+    unread: true
+  },
+  {
+    id: '3',
+    title: 'Event Reminder',
+    description: 'Tech Meetup starts in 2 hours',
+    time: '2 days ago',
+    unread: false
+  }
+];
+
+const sampleFriends = [
+  { id: '1', name: 'John Doe', avatar: '/placeholder.svg', status: 'online' },
+  { id: '2', name: 'Jane Smith', avatar: '/placeholder.svg', status: 'offline' },
+  { id: '3', name: 'Mike Johnson', avatar: '/placeholder.svg', status: 'online' },
+  { id: '4', name: 'Sarah Williams', avatar: '/placeholder.svg', status: 'offline' },
+  { id: '5', name: 'David Brown', avatar: '/placeholder.svg', status: 'online' }
+];
+
+const sampleHobbies = [
+  { id: 'sports', name: 'Sports', count: 24 },
+  { id: 'arts', name: 'Arts', count: 18 },
+  { id: 'music', name: 'Music', count: 32 },
+  { id: 'tech', name: 'Technology', count: 15 },
+  { id: 'food', name: 'Food', count: 27 },
+  { id: 'outdoors', name: 'Outdoors', count: 21 }
+];
+
+const Dashboard = () => {
+  const { user, logout } = useAuth();
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('overview');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [selectedHobby, setSelectedHobby] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [notificationCount, setNotificationCount] = useState(2);
+  const [messageCount, setMessageCount] = useState(1);
+  const [showMap, setShowMap] = useState(false);
+  
+  // Use the events context
+  const { 
+    displayedEvents, 
+    filterEvents, 
+    pastEvents, 
+    friendEvents, 
+    suggestedEvents 
+  } = useEvents();
+  
+  // Filter events based on search query
+  const filteredEvents = displayedEvents.filter(event => 
+    event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    event.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    event.hobby.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+  
+  // Filter places based on search query
+  const filteredPlaces = samplePlaces.filter(place => 
+    place.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    place.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    place.category?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+  
+  // Handle hobby filter
+  const handleHobbyFilter = (hobby: string) => {
+    if (selectedHobby === hobby) {
+      setSelectedHobby(null);
+      filterEvents({ showAll: true });
+    } else {
+      setSelectedHobby(hobby);
+      filterEvents({ hobby });
     }
   };
   
-  // New function to handle event completion
-  const handleMarkEventComplete = (eventId: string) => {
-    markEventComplete(eventId);
+  // Handle notification click
+  const handleNotificationClick = (id: string) => {
+    // Mark notification as read
+    setNotificationCount(prev => Math.max(0, prev - 1));
     toast({
-      title: "Event Completed",
-      description: "The event has been moved to your history.",
+      title: "Notification marked as read",
+      description: "You've read this notification.",
     });
   };
   
-  // Calculate stats
-  const liveEventsCount = displayedEvents.filter(e => e.isLive).length;
-  const placesWithLiveQueueCount = places.filter(p => p.liveQueue).length;
-  const todayEventsCount = displayedEvents.filter(event => {
-    const eventDate = new Date(event.date);
+  // Handle message click
+  const handleMessageClick = (id: string) => {
+    // Mark message as read
+    setMessageCount(prev => Math.max(0, prev - 1));
+    navigate(`/messages/${id}`);
+  };
+  
+  // Handle event click
+  const handleEventClick = (event: Event) => {
+    navigate(`/events/${event.id}`);
+  };
+  
+  // Handle place click
+  const handlePlaceClick = (place: Place) => {
+    navigate(`/places/${place.id}`);
+  };
+  
+  // Format date for display
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
-    return eventDate >= today && eventDate < tomorrow;
-  }).length;
-
+    
+    if (date.toDateString() === today.toDateString()) {
+      return `Today, ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    } else if (date.toDateString() === tomorrow.toDateString()) {
+      return `Tomorrow, ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    } else {
+      return date.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+    }
+  };
+  
+  // Handle logout
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+  
   return (
-    <div className="flex-grow flex relative h-[calc(100vh-4rem)] overflow-hidden">
-      {/* Sidebar Toggle Button (Mobile) */}
-      {isMobile && (
-        <button
-          className={`${
-            sidebarOpen ? "hidden" : "flex"
-          } fixed top-20 left-4 z-40 items-center justify-center p-2 rounded-full bg-white shadow-md`}
-          onClick={() => setSidebarOpen(true)}
-          aria-label="Open filters"
-        >
-          <Filter className="h-5 w-5" />
-        </button>
-      )}
-      
-      {/* Sidebar */}
-      <div
-        className={`
-          ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
-          fixed md:relative z-30 h-[calc(100vh-4rem)] w-80 bg-white border-r shadow-md transition-transform duration-300 ease-in-out
-          flex flex-col
-        `}
-      >
-        {/* Sidebar Header */}
-        <div className="px-4 py-3 border-b flex items-center justify-between">
-          <h2 className="font-semibold text-lg">Filters</h2>
-          {isMobile && (
-            <button
-              className="p-1 rounded-full hover:bg-gray-100"
-              onClick={() => setSidebarOpen(false)}
-              aria-label="Close filters"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          )}
-        </div>
-        
-        {/* Stats Summary */}
-        <div className="px-4 py-2 bg-gray-50">
-          <div className="flex justify-between text-xs text-gray-600">
-            <div className="flex items-center">
-              <Radio className="h-3 w-3 mr-1 text-red-500" />
-              <span>{liveEventsCount} live events</span>
-            </div>
-            <div className="flex items-center">
-              <Calendar className="h-3 w-3 mr-1 text-blue-500" />
-              <span>{todayEventsCount} today</span>
-            </div>
-            <div className="flex items-center">
-              <Wifi className="h-3 w-3 mr-1 text-purple-500" />
-              <span>{placesWithLiveQueueCount} live updates</span>
-            </div>
-          </div>
-        </div>
-        
-        {/* Search and Filters */}
-        <div className="p-4 space-y-6 overflow-y-auto flex-grow">
-          {/* Search Box */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input 
-              type="text" 
-              placeholder="Search..." 
-              className="pl-9"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-          
-          {/* View Buttons for Event Tab */}
-          {activeTab === 'events' && (
-            <div>
-              <h3 className="text-sm font-medium mb-2">View</h3>
-              <div className="grid grid-cols-3 gap-2">
-                <Button
-                  variant={filterMode === 'all' ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setFilterMode('all')}
-                >
-                  All Events
-                </Button>
-                <Button
-                  variant={filterMode === 'friends' ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setFilterMode('friends')}
-                >
-                  Friends
-                </Button>
-                <Button
-                  variant={filterMode === 'suggested' ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setFilterMode('suggested')}
-                >
-                  Suggested
-                </Button>
-              </div>
-              <Button 
-                variant="outline"
-                className="w-full mt-2"
-                onClick={() => setHistoryDialogOpen(true)}
-              >
-                <CalendarClock className="mr-2 h-4 w-4" />
-                Event History
+    <div className="min-h-screen bg-background">
+      {/* Mobile Header */}
+      <header className="lg:hidden flex items-center justify-between p-4 border-b">
+        <div className="flex items-center">
+          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Menu className="h-6 w-6" />
               </Button>
-            </div>
-          )}
-          
-          {/* Tabs: Events/People */}
-          <Tabs defaultValue="events" value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="w-full">
-              <TabsTrigger value="events" className="flex-1">Events</TabsTrigger>
-              <TabsTrigger value="places" className="flex-1">Places</TabsTrigger>
-              <TabsTrigger value="people" className="flex-1">People</TabsTrigger>
-            </TabsList>
-          </Tabs>
-          
-          {/* Live only toggle (for events) */}
-          {activeTab === 'events' && (
-            <div className="flex items-center justify-between">
-              <label htmlFor="live-toggle" className="flex items-center cursor-pointer">
-                <div className="relative">
-                  <input 
-                    id="live-toggle" 
-                    type="checkbox" 
-                    className="sr-only" 
-                    checked={showLiveOnly}
-                    onChange={() => setShowLiveOnly(!showLiveOnly)}
-                  />
-                  <div className={`block w-10 h-6 rounded-full ${showLiveOnly ? 'bg-red-500' : 'bg-gray-300'}`}></div>
-                  <div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${showLiveOnly ? 'transform translate-x-4' : ''}`}></div>
-                </div>
-                <div className="ml-3 text-sm font-medium flex items-center">
-                  <Flame className={`mr-1 h-4 w-4 ${showLiveOnly ? 'text-red-500' : 'text-gray-500'}`} />
-                  Show Live Events Only
-                </div>
-              </label>
-            </div>
-          )}
-          
-          {/* Hobby Filter */}
-          <div>
-            <h3 className="text-sm font-medium mb-2">Hobbies</h3>
-            <div className="flex flex-wrap gap-2">
-              {hobbyFilters.map((hobby) => (
-                <button
-                  key={hobby.name}
-                  className={`px-3 py-1 text-xs rounded-full transition-all ${
-                    selectedHobby === hobby.name 
-                      ? "bg-primary text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
-                  onClick={() => setSelectedHobby(hobby.name)}
-                >
-                  {hobby.name}
-                </button>
-              ))}
-            </div>
-          </div>
-          
-          {/* Place Type Filter (only for places tab) */}
-          {activeTab === 'places' && (
-            <div>
-              <h3 className="text-sm font-medium mb-2">Place Type</h3>
-              <div className="flex flex-wrap gap-2">
-                {placeTypeFilters.map((filter) => (
-                  <button
-                    key={filter.type}
-                    className={`px-3 py-1 text-xs rounded-full transition-all ${
-                      placeType === filter.type 
-                        ? "bg-primary text-white"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    }`}
-                    onClick={() => setPlaceType(filter.type)}
-                  >
-                    {filter.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-          
-          {/* Place Category Filter (only for places tab) */}
-          {activeTab === 'places' && (
-            <div>
-              <h3 className="text-sm font-medium mb-2">Categories</h3>
-              <div className="flex flex-wrap gap-2">
-                {placeCategoryFilters.map((filter) => (
-                  <button
-                    key={filter.type}
-                    className={`px-3 py-1 text-xs rounded-full transition-all ${
-                      placeCategory === filter.type 
-                        ? "bg-primary text-white"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    }`}
-                    onClick={() => setPlaceCategory(filter.type)}
-                  >
-                    {filter.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-          
-          {/* Distance Slider */}
-          <div>
-            <div className="flex justify-between mb-2">
-              <h3 className="text-sm font-medium">Distance</h3>
-              <span className="text-xs text-gray-500">{maxDistance[0]} km</span>
-            </div>
-            <Slider 
-              defaultValue={[10]} 
-              max={50} 
-              step={1} 
-              value={maxDistance}
-              onValueChange={setMaxDistance}
-            />
-          </div>
-          
-          {/* Date Filter (only for events tab) */}
-          {activeTab === 'events' && (
-            <div>
-              <h3 className="text-sm font-medium mb-2">Date</h3>
-              <div className="grid grid-cols-2 gap-2">
-                <Button
-                  variant={dateFilter === 'all' ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setDateFilter('all')}
-                >
-                  All
-                </Button>
-                <Button
-                  variant={dateFilter === 'today' ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setDateFilter('today')}
-                >
-                  Today
-                </Button>
-                <Button
-                  variant={dateFilter === 'tomorrow' ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setDateFilter('tomorrow')}
-                >
-                  Tomorrow
-                </Button>
-                <Button
-                  variant={dateFilter === 'this-week' ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setDateFilter('this-week')}
-                >
-                  This Week
-                </Button>
-              </div>
-            </div>
-          )}
-          
-          {/* Create New Event/Place Button */}
-          <Button className="w-full mt-4">
-            <Plus className="mr-2 h-4 w-4" />
-            Create New {activeTab === 'events' ? 'Event' : activeTab === 'places' ? 'Place' : 'Connection'}
-          </Button>
-        </div>
-        
-        {/* Results Count */}
-        <div className="px-4 py-3 border-t text-sm text-gray-500">
-          {activeTab === 'events' ? (
-            <p>{displayedEvents.length} events found</p>
-          ) : activeTab === 'places' ? (
-            <p>{filteredPlaces.length} places found</p>
-          ) : (
-            <p>{filteredUsers.length} people found</p>
-          )}
-        </div>
-      </div>
-      
-      {/* Main Content */}
-      <div className="relative flex-grow flex">
-        {/* Map Container - Now wrapped in a div with relative positioning */}
-        <div className="relative flex-grow">
-          <MapView 
-            events={displayedEvents}
-            places={filteredPlaces} 
-            onMarkerClick={handleMarkerClick}
-            filterHobby={selectedHobby !== 'All' ? selectedHobby : undefined}
-            filterType={placeType !== 'All' ? placeType : undefined}
-            filterCategory={placeCategory !== 'All' ? placeCategory : undefined}
-            filterDistance={maxDistance[0]} 
-            height="h-full"
-            showControls={true}
-          />
-        </div>
-        
-        {/* Results Panel (Right Side) */}
-        <div className="w-80 results-sidebar">
-          <div className="px-4 py-3 border-b flex items-center justify-between">
-            <h2 className="font-semibold text-lg">
-              {activeTab === 'events' ? 'Events' : activeTab === 'places' ? 'Places' : 'People'}
-            </h2>
-            <div className="flex space-x-2">
-              <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(!sidebarOpen)}>
-                <Filter className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-          
-          {/* Results List */}
-          <div className="p-4 results-content">
-            {activeTab === 'events' ? (
-              displayedEvents.length > 0 ? (
-                <div className="space-y-4">
-                  {/* Live Events Section */}
-                  {displayedEvents.some(event => event.isLive) && (
-                    <div className="mb-6">
-                      <h3 className="text-sm font-medium flex items-center mb-3">
-                        <Radio className="h-4 w-4 mr-1 text-red-500" />
-                        Live Events
-                      </h3>
-                      <div className="space-y-3">
-                        {displayedEvents
-                          .filter(event => event.isLive)
-                          .map(event => (
-                            <div 
-                              key={event.id} 
-                              className={`p-3 border rounded-lg cursor-pointer transition-all hover:border-primary relative ${
-                                selectedEvent === event.id ? 'border-primary bg-primary/5' : ''
-                              }`}
-                              onClick={() => setSelectedEvent(event.id)}
-                            >
-                              <div className="absolute -top-2 -right-2">
-                                <Badge className="bg-red-500 text-white animate-pulse">LIVE</Badge>
-                              </div>
-                              {filterMode === 'friends' && (
-                                <div className="absolute -top-2 -left-2">
-                                  <Badge className="bg-blue-500 text-white">FRIEND</Badge>
-                                </div>
-                              )}
-                              {filterMode === 'suggested' && (
-                                <div className="absolute -top-2 -left-2">
-                                  <Badge className="bg-purple-500 text-white">FOR YOU</Badge>
-                                </div>
-                              )}
-                              <div className="flex items-start justify-between">
-                                <h3 className="font-medium">{event.title}</h3>
-                                <span className="text-xs px-2 py-1 rounded-full bg-red-100 text-red-700">
-                                  {event.hobby}
-                                </span>
-                              </div>
-                              <p className="text-sm text-gray-500 mt-1 line-clamp-2">{event.description}</p>
-                              <div className="mt-2 flex items-center text-xs text-gray-500">
-                                <Users className="h-3 w-3 mr-1" />
-                                <span>{event.liveViewers} watching now</span>
-                              </div>
-                              <div className="mt-2 flex justify-between">
-                                <Button 
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleMarkEventComplete(event.id);
-                                  }}
-                                >
-                                  Mark Complete
-                                </Button>
-                                <Button 
-                                  size="sm"
-                                  className="bg-red-500 hover:bg-red-600"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    navigate(`/events/${event.id}`);
-                                  }}
-                                >
-                                  Join Live
-                                </Button>
-                              </div>
-                            </div>
-                          ))}
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* Upcoming Events Section */}
+            </SheetTrigger>
+            <SheetContent side="left" className="w-[240px] sm:w-[300px]">
+              <div className="py-4">
+                <div className="flex items-center mb-6">
+                  <Avatar className="h-10 w-10 mr-2">
+                    <AvatarImage src="/placeholder.svg" />
+                    <AvatarFallback>U</AvatarFallback>
+                  </Avatar>
                   <div>
-                    <h3 className="text-sm font-medium flex items-center mb-3">
-                      <Calendar className="h-4 w-4 mr-1 text-blue-500" />
-                      {showLiveOnly ? 'No Other Events' : 'Upcoming Events'}
-                    </h3>
-                    <div className="space-y-3">
-                      {displayedEvents
-                        .filter(event => !event.isLive)
-                        .map(event => (
-                          <div
-                            key={event.id}
-                            className={`p-3 border rounded-lg cursor-pointer transition-all hover:border-primary relative ${
-                              selectedEvent === event.id ? 'border-primary bg-primary/5' : ''
-                            }`}
-                            onClick={() => setSelectedEvent(event.id)}
-                          >
-                            {filterMode === 'friends' && (
-                              <div className="absolute -top-2 -left-2">
-                                <Badge className="bg-blue-500 text-white">FRIEND</Badge>
-                              </div>
-                            )}
-                            {filterMode === 'suggested' && (
-                              <div className="absolute -top-2 -left-2">
-                                <Badge className="bg-purple-500 text-white">FOR YOU</Badge>
-                              </div>
-                            )}
-                            <div className="flex items-start justify-between">
-                              <h3 className="font-medium">{event.title}</h3>
-                              <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700">
-                                {event.hobby}
-                              </span>
-                            </div>
-                            <p className="text-sm text-gray-500 mt-1 line-clamp-2">{event.description}</p>
-                            <div className="mt-2 flex justify-between items-center text-xs text-gray-500">
-                              <div className="flex items-center">
-                                <Calendar className="h-3 w-3 mr-1" />
-                                <span>{new Date(event.date).toLocaleDateString()}</span>
-                              </div>
-                              <div className="flex items-center">
-                                <Users className="h-3 w-3 mr-1" />
-                                <span>{event.attendees} attending</span>
-                              </div>
-                            </div>
-                            <div className="mt-2 flex justify-between">
-                              <Button 
-                                size="sm"
-                                variant="outline"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleMarkEventComplete(event.id);
-                                }}
-                              >
-                                Mark Complete
-                              </Button>
-                              <Button 
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  navigate(`/events/${event.id}`);
-                                }}
-                              >
-                                View Details
-                              </Button>
-                            </div>
-                          </div>
-                        ))}
-                    </div>
+                    <div className="font-medium">{user?.name || 'User'}</div>
+                    <div className="text-sm text-muted-foreground">{user?.email || 'user@example.com'}</div>
                   </div>
                 </div>
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <Calendar className="mx-auto h-10 w-10 mb-2 opacity-50" />
-                  <p>No events found matching your filters</p>
-                  <Button variant="link" onClick={() => {
-                    setSearchQuery('');
-                    setSelectedHobby('All');
-                    setDateFilter('all');
-                    setShowLiveOnly(false);
-                    setFilterMode('all');
-                  }}>
-                    Reset filters
+                
+                <nav className="space-y-1">
+                  <Button 
+                    variant={activeTab === 'overview' ? 'default' : 'ghost'} 
+                    className="w-full justify-start"
+                    onClick={() => {
+                      setActiveTab('overview');
+                      setMobileMenuOpen(false);
+                    }}
+                  >
+                    <Home className="mr-2 h-4 w-4" />
+                    Overview
                   </Button>
-                </div>
-              )
-            ) : activeTab === 'places' ? (
-              filteredPlaces.length > 0 ? (
-                <div className="space-y-4">
-                  {/* Places with Live Queues Section */}
-                  {filteredPlaces.some(place => place.liveQueue) && (
-                    <div className="mb-6">
-                      <h3 className="text-sm font-medium flex items-center mb-3">
-                        <Wifi className="h-4 w-4 mr-1 text-purple-500" />
-                        Places with Live Updates
-                      </h3>
-                      <div className="space-y-3">
-                        {filteredPlaces
-                          .filter(place => place.liveQueue)
-                          .map(place => (
-                            <div 
-                              key={place.id} 
-                              className={`p-3 border rounded-lg cursor-pointer transition-all hover:border-primary relative ${
-                                selectedEvent === place.id ? 'border-primary bg-primary/5' : ''
-                              }`}
-                              onClick={() => setSelectedEvent(place.id)}
-                            >
-                              <div className="absolute -top-2 -right-2">
-                                <Badge 
-                                  className={`
-                                    ${place.liveQueue?.status === 'low' ? 'bg-green-500' : 
-                                      place.liveQueue?.status === 'moderate' ? 'bg-amber-500' : 
-                                      place.liveQueue?.status === 'busy' ? 'bg-orange-500' : 'bg-red-500'} 
-                                    text-white
-                                  `}
-                                >
-                                  {place.liveQueue?.status.toUpperCase()}
-                                </Badge>
-                              </div>
-                              <div className="flex items-start justify-between">
-                                <h3 className="font-medium">{place.title}</h3>
-                                <span className={`text-xs px-2 py-1 rounded-full ${
-                                  place.category === 'restaurant' ? 'bg-amber-100 text-amber-700' :
-                                  place.category === 'cafe' ? 'bg-orange-100 text-orange-700' :
-                                  place.category === 'shop' ? 'bg-green-100 text-green-700' :
-                                  place.category === 'bar' ? 'bg-purple-100 text-purple-700' :
-                                  place.category === 'hotel' ? 'bg-blue-100 text-blue-700' :
-                                  place.category === 'school' ? 'bg-pink-100 text-pink-700' :
-                                  place.category === 'park' ? 'bg-yellow-100 text-yellow-700' :
-                                  place.category === 'landmark' ? 'bg-gray-100 text-gray-700' :
-                                  place.category === 'theater' ? 'bg-indigo-100 text-indigo-700' :
-                                  place.category === 'beach' ? 'bg-pink-100 text-pink-700' :
-                                  place.category === 'camping' ? 'bg-green-100 text-green-700' :
-                                  'bg-purple-100 text-purple-700'
-                                }`}>
-                                  {place.category}
-                                </span>
-                              </div>
-                              <p className="text-sm text-gray-500 mt-1 line-clamp-2">{place.description}</p>
-                              <div className="mt-2 flex justify-between items-center text-xs">
-                                <span className="text-gray-500">
-                                  {place.liveQueue?.count} in queue • {place.liveQueue?.estimatedWaitTime} min wait
-                                </span>
-                                <Button 
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    navigate(`/places/${place.id}`);
-                                  }}
-                                >
-                                  Details
-                                </Button>
-                              </div>
-                            </div>
-                          ))}
-                      </div>
-                    </div>
-                  )}
                   
-                  {/* Other Places Section */}
-                  <div>
-                    <h3 className="text-sm font-medium flex items-center mb-3">
-                      <MapPin className="h-4 w-4 mr-1 text-blue-500" />
-                      All Places
-                    </h3>
-                    <div className="space-y-3">
-                      {filteredPlaces
-                        .filter(place => !place.liveQueue)
-                        .map(place => (
-                          <div 
-                            key={place.id} 
-                            className={`p-3 border rounded-lg cursor-pointer transition-all hover:border-primary ${
-                              selectedEvent === place.id ? 'border-primary bg-primary/5' : ''
-                            }`}
-                            onClick={() => setSelectedEvent(place.id)}
-                          >
-                            <div className="flex items-start justify-between">
-                              <h3 className="font-medium">{place.title}</h3>
-                              <span className={`text-xs px-2 py-1 rounded-full ${
-                                place.type === 'myPlace' ? 'bg-blue-100 text-blue-700' : 
-                                place.type === 'publicPlace' ? 'bg-amber-100 text-amber-700' :
-                                place.type === 'property' ? 'bg-green-100 text-green-700' :
-                                'bg-purple-100 text-purple-700'
-                              }`}>
-                                {place.category || place.type}
-                              </span>
-                            </div>
-                            <p className="text-sm text-gray-500 mt-1 line-clamp-2">{place.description}</p>
-                            
-                            {place.location.buildingName && (
-                              <div className="mt-1 text-xs text-gray-500">
-                                {place.location.buildingName}
-                              </div>
-                            )}
-                            
-                            {place.price && (
-                              <div className="mt-1 font-bold">${place.price.toLocaleString()}</div>
-                            )}
-                            
-                            <div className="mt-2 flex justify-end space-x-2">
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  navigate(`/places/${place.id}`);
-                                }}
-                              >
-                                Details
-                              </Button>
-                            </div>
-                          </div>
-                        ))}
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <MapPin className="mx-auto h-10 w-10 mb-2 opacity-50" />
-                  <p>No places found matching your filters</p>
-                  <Button variant="link" onClick={() => {
-                    setSearchQuery('');
-                    setPlaceType('All');
-                    setPlaceCategory('All');
-                  }}>
-                    Reset filters
+                  <Button 
+                    variant={activeTab === 'events' ? 'default' : 'ghost'} 
+                    className="w-full justify-start"
+                    onClick={() => {
+                      setActiveTab('events');
+                      setMobileMenuOpen(false);
+                    }}
+                  >
+                    <Calendar className="mr-2 h-4 w-4" />
+                    Events
+                  </Button>
+                  
+                  <Button 
+                    variant={activeTab === 'places' ? 'default' : 'ghost'} 
+                    className="w-full justify-start"
+                    onClick={() => {
+                      setActiveTab('places');
+                      setMobileMenuOpen(false);
+                    }}
+                  >
+                    <Building className="mr-2 h-4 w-4" />
+                    Places
+                  </Button>
+                  
+                  <Button 
+                    variant={activeTab === 'messages' ? 'default' : 'ghost'} 
+                    className="w-full justify-start"
+                    onClick={() => {
+                      setActiveTab('messages');
+                      setMobileMenuOpen(false);
+                    }}
+                  >
+                    <MessageSquare className="mr-2 h-4 w-4" />
+                    Messages
+                    {messageCount > 0 && (
+                      <Badge variant="destructive" className="ml-auto">
+                        {messageCount}
+                      </Badge>
+                    )}
+                  </Button>
+                  
+                  <Button 
+                    variant={activeTab === 'notifications' ? 'default' : 'ghost'} 
+                    className="w-full justify-start"
+                    onClick={() => {
+                      setActiveTab('notifications');
+                      setMobileMenuOpen(false);
+                    }}
+                  >
+                    <Bell className="mr-2 h-4 w-4" />
+                    Notifications
+                    {notificationCount > 0 && (
+                      <Badge variant="destructive" className="ml-auto">
+                        {notificationCount}
+                      </Badge>
+                    )}
+                  </Button>
+                  
+                  <Button 
+                    variant={activeTab === 'friends' ? 'default' : 'ghost'} 
+                    className="w-full justify-start"
+                    onClick={() => {
+                      setActiveTab('friends');
+                      setMobileMenuOpen(false);
+                    }}
+                  >
+                    <Users className="mr-2 h-4 w-4" />
+                    Friends
+                  </Button>
+                  
+                  <Button 
+                    variant={activeTab === 'settings' ? 'default' : 'ghost'} 
+                    className="w-full justify-start"
+                    onClick={() => {
+                      setActiveTab('settings');
+                      setMobileMenuOpen(false);
+                    }}
+                  >
+                    <Settings className="mr-2 h-4 w-4" />
+                    Settings
+                  </Button>
+                </nav>
+                
+                <div className="mt-6 pt-6 border-t">
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50"
+                    onClick={handleLogout}
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Logout
                   </Button>
                 </div>
-              )
-            ) : (
-              filteredUsers.length > 0 ? (
-                filteredUsers.map(user => (
-                  <UserCard
-                    key={user.id}
-                    id={user.id}
-                    name={user.name}
-                    avatar={user.avatar}
-                    bio={user.bio}
-                    location={user.location}
-                    hobbies={user.hobbies}
-                    distance={user.distance}
-                    commonHobbies={user.commonHobbies}
-                  />
-                ))
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <Users className="mx-auto h-10 w-10 mb-2 opacity-50" />
-                  <p>No people found matching your filters</p>
-                  <Button variant="link" onClick={() => {
-                    setSearchQuery('');
-                    setSelectedHobby('All');
-                  }}>
-                    Reset filters
-                  </Button>
-                </div>
-              )
+              </div>
+            </SheetContent>
+          </Sheet>
+          <h1 className="text-xl font-bold">Dashboard</h1>
+        </div>
+        
+        <div className="flex items-center">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="relative"
+            onClick={() => setActiveTab('notifications')}
+          >
+            <Bell className="h-5 w-5" />
+            {notificationCount > 0 && (
+              <span className="absolute top-0 right-0 h-4 w-4 bg-red-500 rounded-full text-[10px] flex items-center justify-center text-white">
+                {notificationCount}
+              </span>
             )}
-          </div>
+          </Button>
+          
+          <Button 
+            variant="ghost" 
+            size="icon"
+            className="relative"
+            onClick={() => setActiveTab('messages')}
+          >
+            <MessageSquare className="h-5 w-5" />
+            {messageCount > 0 && (
+              <span className="absolute top-0 right-0 h-4 w-4 bg-red-500 rounded-full text-[10px] flex items-center justify-center text-white">
+                {messageCount}
+              </span>
+            )}
+          </Button>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="rounded-full">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src="/placeholder.svg" />
+                  <AvatarFallback>U</AvatarFallback>
+                </Avatar>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setActiveTab('settings')}>
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Settings</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleLogout}>
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Logout</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
+      </header>
+      
+      <div className="flex h-screen lg:h-[calc(100vh-0px)]">
+        {/* Sidebar - Desktop only */}
+        <aside className="hidden lg:flex lg:w-64 flex-col border-r p-4">
+          <div className="flex items-center mb-6">
+            <Avatar className="h-10 w-10 mr-2">
+              <AvatarImage src="/placeholder.svg" />
+              <AvatarFallback>U</AvatarFallback>
+            </Avatar>
+            <div>
+              <div className="font-medium">{user?.name || 'User'}</div>
+              <div className="text-sm text-muted-foreground">{user?.email || 'user@example.com'}</div>
+            </div>
+          </div>
+          
+          <nav className="space-y-1 flex-1">
+            <Button 
+              variant={activeTab === 'overview' ? 'default' : 'ghost'} 
+              className="w-full justify-start"
+              onClick={() => setActiveTab('overview')}
+            >
+              <Home className="mr-2 h-4 w-4" />
+              Overview
+            </Button>
+            
+            <Button 
+              variant={activeTab === 'events' ? 'default' : 'ghost'} 
+              className="w-full justify-start"
+              onClick={() => setActiveTab('events')}
+            >
+              <Calendar className="mr-2 h-4 w-4" />
+              Events
+            </Button>
+            
+            <Button 
+              variant={activeTab === 'places' ? 'default' : 'ghost'} 
+              className="w-full justify-start"
+              onClick={() => setActiveTab('places')}
+            >
+              <Building className="mr-2 h-4 w-4" />
+              Places
+            </Button>
+            
+            <Button 
+              variant={activeTab === 'messages' ? 'default' : 'ghost'} 
+              className="w-full justify-start"
+              onClick={() => setActiveTab('messages')}
+            >
+              <MessageSquare className="mr-2 h-4 w-4" />
+              Messages
+              {messageCount > 0 && (
+                <Badge variant="destructive" className="ml-auto">
+                  {messageCount}
+                </Badge>
+              )}
+            </Button>
+            
+            <Button 
+              variant={activeTab === 'notifications' ? 'default' : 'ghost'} 
+              className="w-full justify-start"
+              onClick={() => setActiveTab('notifications')}
+            >
+              <Bell className="mr-2 h-4 w-4" />
+              Notifications
+              {notificationCount > 0 && (
+                <Badge variant="destructive" className="ml-auto">
+                  {notificationCount}
+                </Badge>
+              )}
+            </Button>
+            
+            <Button 
+              variant={activeTab === 'friends' ? 'default' : 'ghost'} 
+              className="w-full justify-start"
+              onClick={() => setActiveTab('friends')}
+            >
+              <Users className="mr-2 h-4 w-4" />
+              Friends
+            </Button>
+            
+            <Button 
+              variant={activeTab === 'settings' ? 'default' : 'ghost'} 
+              className="w-full justify-start"
+              onClick={() => setActiveTab('settings')}
+            >
+              <Settings className="mr-2 h-4 w-4" />
+              Settings
+            </Button>
+          </nav>
+          
+          <div className="mt-auto pt-4 border-t">
+            <Button 
+              variant="ghost" 
+              className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50"
+              onClick={handleLogout}
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              Logout
+            </Button>
+          </div>
+        </aside>
+        
+        {/* Main Content */}
+        <main className="flex-1 overflow-y-auto">
+          {/* Overview Tab */}
+          {activeTab === 'overview' && (
+            <div className="p-4 md:p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h1 className="text-2xl font-bold">Welcome back, {user?.name || 'User'}!</h1>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setShowMap(!showMap)}
+                >
+                  {showMap ? (
+                    <>
+                      <Home className="mr-2 h-4 w-4" />
+                      <span>Hide Map</span>
+                    </>
+                  ) : (
+                    <>
+                      <MapIcon className="mr-2 h-4 w-4" />
+                      <span>Show Map</span>
+                    </>
+                  )}
+                </Button>
+              </div>
+              
+              {showMap ? (
+                <div className="h-[300px] md:h-[400px] mb-6 rounded-lg overflow-hidden border">
+                  <MapView 
+                    events={displayedEvents} 
+                    places={samplePlaces}
+                    height="h-full"
+                    showControls={true}
+                  />
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                  <Card>
+                    <CardContent className="p-4 flex flex-col">
+                      <div className="text-sm font-medium text-muted-foreground mb-1">Upcoming Events</div>
+                      <div className="text-2xl font-bold">{displayedEvents.length}</div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        {displayedEvents.filter(e => new Date(e.date) < new Date(Date.now() + 86400000)).length} events today
+                      </div>
+                      <Button 
+                        variant="link" 
+                        className="mt-2 p-0 h-auto self-start"
+                        onClick={() => setActiveTab('events')}
+                      >
+                        View all events
+                      </Button>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card>
+                    <CardContent className="p-4 flex flex-col">
+                      <div className="text-sm font-medium text-muted-foreground mb-1">My Places</div>
+                      <div className="text-2xl font-bold">{samplePlaces.filter(p => p.isOwner).length}</div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        {samplePlaces.filter(p => p.isOwner && p.action === 'rent').length} for rent, {samplePlaces.filter(p => p.isOwner && p.action === 'sell').length} for sale
+                      </div>
+                      <Button 
+                        variant="link" 
+                        className="mt-2 p-0 h-auto self-start"
+                        onClick={() => setActiveTab('places')}
+                      >
+                        View all places
+                      </Button>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card>
+                    <CardContent className="p-4 flex flex-col">
+                      <div className="text-sm font-medium text-muted-foreground mb-1">Messages</div>
+                      <div className="text-2xl font-bold">{sampleMessages.length}</div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        {sampleMessages.filter(m => m.unread).length} unread messages
+                      </div>
+                      <Button 
+                        variant="link" 
+                        className="mt-2 p-0 h-auto self-start"
+                        onClick={() => setActiveTab('messages')}
+                      >
+                        View all messages
+                      </Button>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card>
+                    <CardContent className="p-4 flex flex-col">
+                      <div className="text-sm font-medium text-muted-foreground mb-1">Friends</div>
+                      <div className="text-2xl font-bold">{sampleFriends.length}</div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        {sampleFriends.filter(f => f.status === 'online').length} online now
+                      </div>
+                      <Button 
+                        variant="link" 
+                        className="mt-2 p-0 h-auto self-start"
+                        onClick={() => setActiveTab('friends')}
+                      >
+                        View all friends
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+              
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-semibold">Upcoming Events</h2>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => setActiveTab('events')}
+                  >
+                    View all
+                    <ChevronRight className="ml-1 h-4 w-4" />
+                  </Button>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {displayedEvents.slice(0, 3).map((event) => (
+                    <Card key={event.id} className="cursor-pointer hover:border-primary transition-colors" onClick={() => handleEventClick(event)}>
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <h3 className="font-medium">{event.title}</h3>
+                            <div className="flex items-center text-sm text-muted-foreground mt-1">
+                              <Calendar className="mr-1 h-4 w-4" />
+                              <span>{formatDate(event.date)}</span>
+                            </div>
+                          </div>
+                          <Badge>{event.hobby}</Badge>
+                        </div>
+                        
+                        <div className="mt-2 text-sm text-muted-foreground line-clamp-2">
+                          {event.description}
+                        </div>
+                        
+                        <div className="mt-3 flex items-center justify-between">
+                          <div className="flex items-center text-sm">
+                            <Users className="mr-1 h-4 w-4" />
+                            <span>{event.attendees} attending</span>
+                          </div>
+                          
+                          {event.isLive && event.liveViewers !== undefined && (
+                            <div className="flex items-center text-sm text-red-500">
+                              <Eye className="mr-1 h-4 w-4" />
+                              <span>{event.liveViewers} watching</span>
+                            </div>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-semibold">My Places</h2>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => setActiveTab('places')}
+                  >
+                    View all
+                    <ChevronRight className="ml-1 h-4 w-4" />
+                  </Button>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {samplePlaces.filter(p => p.isOwner).slice(0, 3).map((place) => (
+                    <Card key={place.id} className="cursor-pointer hover:border-primary transition-colors" onClick={() => handlePlaceClick(place)}>
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <h3 className="font-medium">{place.title}</h3>
+                            <div className="flex items-center text-sm text-muted-foreground mt-1">
+                              <MapPin className="mr-1 h-4 w-4" />
+                              <span>{place.location.buildingName || 'Unknown location'}</span>
+                            </div>
+                          </div>
+                          <Badge variant="outline">
+                            {place.category === 'flat' ? 'Flat' : 
+                             place.category === 'villa' ? 'Villa' :
+                             place.category === 'restaurant' ? 'Restaurant' : 
+                             place.category === 'shop' ? 'Shop' : 'Place'}
+                          </Badge>
+                        </div>
+                        
+                        <div className="mt-2 text-sm text-muted-foreground line-clamp-2">
+                          {place.description}
+                        </div>
+                        
+                        <div className="mt-3 flex items-center justify-between">
+                          {place.price !== undefined && (
+                            <div className="font-semibold">
+                              ${place.price.toLocaleString()}{place.action === 'rent' ? '/month' : ''}
+                            </div>
+                          )}
+                          
+                          <Badge variant={place.action === 'rent' ? 'default' : place.action === 'sell' ? 'destructive' : 'secondary'}>
+                            {place.action === 'rent' ? 'For Rent' : 
+                             place.action === 'sell' ? 'For Sale' : 
+                             'Wanted to Buy'}
+                          </Badge>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+              
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-semibold">Recent Messages</h2>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => setActiveTab('messages')}
+                  >
+                    View all
+                    <ChevronRight className="ml-1 h-4 w-4" />
+                  </Button>
+                </div>
+                
+                <div className="space-y-2">
+                  {sampleMessages.slice(0, 3).map((message) => (
+                    <Card 
+                      key={message.id} 
+                      className={`cursor-pointer hover:border-primary transition-colors ${message.unread ? 'bg-primary/5' : ''}`}
+                      onClick={() => handleMessageClick(message.id)}
+                    >
+                      <CardContent className="p-4 flex items-center">
+                        <Avatar className="h-10 w-10 mr-3">
+                          <AvatarImage src={message.avatar} />
+                          <AvatarFallback>{message.sender.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <h3 className="font-medium">{message.sender}</h3>
+                            <span className="text-xs text-muted-foreground">{message.time}</span>
+                          </div>
+                          <p className="text-sm text-muted-foreground truncate">{message.message}</p>
+                        </div>
+                        {message.unread && (
+                          <div className="ml-2 h-2 w-2 bg-primary rounded-full"></div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* Events Tab */}
+          {activeTab === 'events' && (
+            <div className="p-4 md:p-6">
+              <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
+                <h1 className="text-2xl font-bold mb-4 md:mb-0">Events</h1>
+                
+                <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search events..."
+                      className="pl-8 w-full md:w-[200px] lg:w-[300px]"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                  </div>
+                  
+                  <div className="flex space-x-2">
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button>
+                          <Plus className="mr-2 h-4 w-4" />
+                          Create Event
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Create New Event</DialogTitle>
+                          <DialogDescription>
+                            Fill in the details to create a new event.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="py-4">
+                          <p className="text-center text-muted-foreground">
+                            Event creation form would go here.
+                          </p>
+                        </div>
+                        <DialogFooter>
+                          <Button variant="outline">Cancel</Button>
+                          <Button>Create Event</Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                    
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="icon">
+                          <Filter className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-[200px]">
+                        <DropdownMenuLabel>Filter Events</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => filterEvents({ showAll: true })}>
+                          All Events
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => filterEvents({ showFriendsOnly: true })}>
+                          Friends' Events
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => filterEvents({ showSuggestedOnly: true })}>
+                          Suggested Events
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => filterEvents({ liveOnly: true })}>
+                          Live Events
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => filterEvents({ dateRange: 'today' })}>
+                          Today
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => filterEvents({ dateRange: 'tomorrow' })}>
+                          Tomorrow
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => filterEvents({ dateRange: 'this-week' })}>
+                          This Week
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mb-6 overflow-x-auto">
+                <div className="flex space-x-2 min-w-max pb-2">
+                  <Button 
+                    variant={selectedHobby === null ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => handleHobbyFilter('All')}
+                  >
+                    All
+                  </Button>
+                  
+                  {sampleHobbies.map((hobby) => (
+                    <Button 
+                      key={hobby.id}
+                      variant={selectedHobby === hobby.id ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => handleHobbyFilter(hobby.id)}
+                    >
+                      {hobby.name} ({hobby.count})
+                    </Button>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredEvents.length > 0 ? (
+                  filteredEvents.map((event) => (
+                    <Card key={event.id} className="cursor-pointer hover:border-primary transition-colors" onClick={() => handleEventClick(event)}>
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <h3 className="font-medium">{event.title}</h3>
+                            <div className="flex items-center text-sm text-muted-foreground mt-1">
+                              <Calendar className="mr-1 h-4 w-4" />
+                              <span>{formatDate(event.date)}</span>
+                            </div>
+                            <div className="flex items-center text-sm text-muted-foreground mt-1">
+                              <MapPin className="mr-1 h-4 w-4" />
+                              <span>{event.location.buildingName || 'Unknown location'}</span>
+                            </div>
+                          </div>
+                          <Badge>{event.hobby}</Badge>
+                        </div>
+                        
+                        <div className="mt-2 text-sm text-muted-foreground line-clamp-2">
+                          {event.description}
+                        </div>
+                        
+                        <div className="mt-3 flex items-center justify-between">
+                          <div className="flex items-center text-sm">
+                            <Users className="mr-1 h-4 w-4" />
+                            <span>{event.attendees} attending</span>
+                          </div>
+                          
+                          {event.isLive && event.liveViewers !== undefined && (
+                            <div className="flex items-center text-sm text-red-500">
+                              <Eye className="mr-1 h-4 w-4" />
+                              <span>{event.liveViewers} watching</span>
+                            </div>
+                          )}
+                        </div>
+                        
+                        <div className="mt-3 flex justify-end">
+                          <Button variant="outline" size="sm">
+                            View Details
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                ) : (
+                  <div className="col-span-full flex flex-col items-center justify-center py-12">
+                    <Calendar className="h-12 w-12 text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-medium">No events found</h3>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {searchQuery ? 'Try a different search term' : 'Create a new event or change filters'}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+          
+          {/* Places Tab */}
+          {activeTab === 'places' && (
+            <div className="p-4 md:p-6">
+              <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
+                <h1 className="text-2xl font-bold mb-4 md:mb-0">Places</h1>
+                
+                <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search places..."
+                      className="pl-8 w-full md:w-[200px] lg:w-[300px]"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                  </div>
+                  
+                  <div className="flex space-x-2">
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button>
+                          <Plus className="mr-2 h-4 w-4" />
+                          Add Place
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Add New Place</DialogTitle>
+                          <DialogDescription>
+                            Fill in the details to add a new place.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="py-4">
+                          <p className="text-center text-muted-foreground">
+                            Place creation form would go here.
+                          </p>
+                        </div>
+                        <DialogFooter>
+                          <Button variant="outline">Cancel</Button>
+                          <Button>Add Place</Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                    
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="icon">
+                          <Filter className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-[200px]">
+                        <DropdownMenuLabel>Filter Places</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem>
+                          All Places
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                          My Places
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem>
+                          Flats
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                          Villas
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                          Restaurants
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                          Shops
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem>
+                          For Rent
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                          For Sale
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                          Wanted to Buy
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mb-6 overflow-x-auto">
+                <div className="flex space-x-2 min-w-max pb-2">
+                  <Button 
+                    variant="default"
+                    size="sm"
+                  >
+                    All
+                  </Button>
+                  
+                  <Button 
+                    variant="outline"
+                    size="sm"
+                  >
+                    <Building className="mr-1 h-4 w-4" />
+                    Flats
+                  </Button>
+                  
+                  <Button 
+                    variant="outline"
+                    size="sm"
+                  >
+                    <Home className="mr-1 h-4 w-4" />
+                    Villas
+                  </Button>
+                  
+                  <Button 
+                    variant="outline"
+                    size="sm"
+                  >
+                    <UtensilsCrossed className="mr-1 h-4 w-4" />
+                    Restaurants
+                  </Button>
+                  
+                  <Button 
+                    variant="outline"
+                    size="sm"
+                  >
+                    <Store className="mr-1 h-4 w-4" />
+                    Shops
+                  </Button>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredPlaces.length > 0 ? (
+                  filteredPlaces.map((place) => (
+                    <Card key={place.id} className="cursor-pointer hover:border-primary transition-colors" onClick={() => handlePlaceClick(place)}>
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <h3 className="font-medium">{place.title}</h3>
+                            <div className="flex items-center text-sm text-muted-foreground mt-1">
+                              <MapPin className="mr-1 h-4 w-4" />
+                              <span>{place.location.buildingName || 'Unknown location'}</span>
+                            </div>
+                          </div>
+                          <Badge variant="outline">
+                            {place.category === 'flat' ? 'Flat' : 
+                             place.category === 'villa' ? 'Villa' :
+                             place.category === 'restaurant' ? 'Restaurant' : 
+                             place.category === 'shop' ? 'Shop' : 'Place'}
+                          </Badge>
+                        </div>
+                        
+                        <div className="mt-2 text-sm text-muted-foreground line-clamp-2">
+                          {place.description}
+                        </div>
+                        
+                        <div className="mt-3 flex items-center justify-between">
+                          <div className="flex items-center space-x-2">
+                            {place.price !== undefined && (
+                              <div className="font-semibold">
+                                ${place.price.toLocaleString()}{place.action === 'rent' ? '/month' : ''}
+                              </div>
+                            )}
+                            
+                            {place.area && (
+                              <div className="text-sm text-muted-foreground">
+                                {place.area} m²
+                              </div>
+                            )}
+                          </div>
+                          
+                          <Badge variant={place.action === 'rent' ? 'default' : place.action === 'sell' ? 'destructive' : 'secondary'}>
+                            {place.action === 'rent' ? 'For Rent' : 
+                             place.action === 'sell' ? 'For Sale' : 
+                             'Wanted to Buy'}
+                          </Badge>
+                        </div>
+                        
+                        <div className="mt-3 flex justify-end">
+                          <Button variant="outline" size="sm">
+                            View Details
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                ) : (
+                  <div className="col-span-full flex flex-col items-center justify-center py-12">
+                    <Building className="h-12 w-12 text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-medium">No places found</h3>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {searchQuery ? 'Try a different search term' : 'Add a new place or change filters'}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+          
+          {/* Messages Tab */}
+          {activeTab === 'messages' && (
+            <div className="p-4 md:p-6">
+              <h1 className="text-2xl font-bold mb-6">Messages</h1>
+              
+              <div className="space-y-4">
+                {sampleMessages.map((message) => (
+                  <Card 
+                    key={message.id} 
+                    className={`cursor-pointer hover:border-primary transition-colors ${message.unread ? 'bg-primary/5' : ''}`}
+                    onClick={() => handleMessageClick(message.id)}
+                  >
+                    <CardContent className="p-4 flex items-center">
+                      <Avatar className="h-12 w-12 mr-4">
+                        <AvatarImage src={message.avatar} />
+                        <AvatarFallback>{message.sender.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <h3 className="font-medium">{message.sender}</h3>
+                          <span className="text-xs text-muted-foreground">{message.time}</span>
+                        </div>
+                        <p className="text-sm text-muted-foreground truncate">{message.message}</p>
+                      </div>
+                      {message.unread && (
+                        <div className="ml-4 h-3 w-3 bg-primary rounded-full"></div>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {/* Notifications Tab */}
+          {activeTab === 'notifications' && (
+            <div className="p-4 md:p-6">
+              <h1 className="text-2xl font-bold mb-6">Notifications</h1>
+              
+              <div className="space-y-4">
+                {sampleNotifications.map((notification) => (
+                  <Card 
+                    key={notification.id} 
+                    className={`cursor-pointer hover:border-primary transition-colors ${notification.unread ? 'bg-primary/5' : ''}`}
+                    onClick={() => handleNotificationClick(notification.id)}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-start">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <h3 className="font-medium">{notification.title}</h3>
+                            <span className="text-xs text-muted-foreground">{notification.time}</span>
+                          </div>
+                          <p className="text-sm text-muted-foreground mt-1">{notification.description}</p>
+                        </div>
+                        {notification.unread && (
+                          <div className="ml-4 h-3 w-3 bg-primary rounded-full mt-1.5"></div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {/* Friends Tab */}
+          {activeTab === 'friends' && (
+            <div className="p-4 md:p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h1 className="text-2xl font-bold">Friends</h1>
+                
+                <Button>
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  Add Friend
+                </Button>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {sampleFriends.map((friend) => (
+                  <Card key={friend.id}>
+                    <CardContent className="p-4 flex items-center">
+                      <div className="relative">
+                        <Avatar className="h-12 w-12">
+                          <AvatarImage src={friend.avatar} />
+                          <AvatarFallback>{friend.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-background ${friend.status === 'online' ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                      </div>
+                      <div className="ml-4">
+                        <h3 className="font-medium">{friend.name}</h3>
+                        <p className="text-xs text-muted-foreground">
+                          {friend.status === 'online' ? 'Online' : 'Offline'}
+                        </p>
+                      </div>
+                      <div className="ml-auto flex space-x-2">
+                        <Button variant="outline" size="sm">
+                          <MessageSquare className="h-4 w-4" />
+                        </Button>
+                        <Button variant="outline" size="sm">
+                          <CalendarDays className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {/* Settings Tab */}
+          {activeTab === 'settings' && (
+            <div className="p-4 md:p-6">
+              <h1 className="text-2xl font-bold mb-6">Settings</h1>
+              
+              <div className="space-y-6">
+                <Card>
+                  <CardContent className="p-6">
+                    <h2 className="text-lg font-medium mb-4">Profile Settings</h2>
+                    <div className="space-y-4">
+                      <div className="flex flex-col md:flex-row md:items-center gap-4">
+                        <Avatar className="h-20 w-20">
+                          <AvatarImage src="/placeholder.svg" />
+                          <AvatarFallback>U</AvatarFallback>
+                        </Avatar>
+                        <div className="space-y-2">
+                          <Button variant="outline" size="sm">
+                            Change Avatar
+                          </Button>
+                          <p className="text-xs text-muted-foreground">
+                            Recommended size: 200x200px
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="name">Name</Label>
+                        <Input id="name" defaultValue={user?.name || 'User'} />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="email">Email</Label>
+                        <Input id="email" defaultValue={user?.email || 'user@example.com'} />
+                      </div>
+                      
+                      <Button>Save Changes</Button>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardContent className="p-6">
+                    <h2 className="text-lg font-medium mb-4">Notification Settings</h2>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="font-medium">Email Notifications</h3>
+                          <p className="text-sm text-muted-foreground">Receive notifications via email</p>
+                        </div>
+                        <Switch checked={true} />
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="font-medium">Push Notifications</h3>
+                          <p className="text-sm text-muted-foreground">Receive push notifications</p>
+                        </div>
+                        <Switch checked={true} />
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="font-medium">Event Reminders</h3>
+                          <p className="text-sm text-muted-foreground">Get reminders about upcoming events</p>
+                        </div>
+                        <Switch checked={true} />
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="font-medium">Marketing Emails</h3>
+                          <p className="text-sm text-muted-foreground">Receive marketing and promotional emails</p>
+                        </div>
+                        <Switch checked={false} />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardContent className="p-6">
+                    <h2 className="text-lg font-medium mb-4">Privacy Settings</h2>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="font-medium">Public Profile</h3>
+                          <p className="text-sm text-muted-foreground">Make your profile visible to others</p>
+                        </div>
+                        <Switch checked={true} />
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="font-medium">Show Online Status</h3>
+                          <p className="text-sm text-muted-foreground">Let others see when you're online</p>
+                        </div>
+                        <Switch checked={true} />
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="font-medium">Share Activity</h3>
+                          <p className="text-sm text-muted-foreground">Share your activity with friends</p>
+                        </div>
+                        <Switch checked={false} />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card className="border-red-200">
+                  <CardContent className="p-6">
+                    <h2 className="text-lg font-medium text-red-500 mb-4">Danger Zone</h2>
+                    <div className="space-y-4">
+                      <div>
+                        <h3 className="font-medium">Delete Account</h3>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          Once you delete your account, there is no going back. Please be certain.
+                        </p>
+                        <Button variant="destructive">Delete Account</Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          )}
+        </main>
       </div>
-
-      {/* Event History Dialog */}
-      <Dialog open={historyDialogOpen} onOpenChange={setHistoryDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Event History</DialogTitle>
-          </DialogHeader>
-          <EventHistory 
-            userEvents={pastEvents} 
-            placeEvents={[]} // In a real app, you would filter by selected place
-          />
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
 
-const Dashboard = () => {
-  const { isAuthenticated, user } = useAuth();
-  const navigate = useNavigate();
-  const { location } = useGeolocation();
-  
-  // Generate the sample data when component loads
-  const [events, setEvents] = useState(() => {
-    const defaultLocation = { lat: 51.505, lng: -0.09 };
-    const center = location || defaultLocation;
-    return generateSampleEvents(40, center);
-  });
-
-  // Redirect if not authenticated
-  useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/login');
-    }
-  }, [isAuthenticated, navigate]);
-
-  if (!isAuthenticated) {
-    return null;
-  }
-
+// Mock Switch component for settings
+const Switch = ({ checked }: { checked: boolean }) => {
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      <EventProvider initialEvents={events}>
-        <DashboardContent />
-      </EventProvider>
+    <div className={`w-11 h-6 rounded-full p-1 ${checked ? 'bg-primary' : 'bg-gray-300'}`}>
+      <div className={`w-4 h-4 rounded-full bg-white transition-transform ${checked ? 'translate-x-5' : ''}`}></div>
     </div>
+  );
+};
+
+// Mock Label component for settings
+const Label = ({ htmlFor, children }: { htmlFor: string, children: React.ReactNode }) => {
+  return (
+    <label htmlFor={htmlFor} className="text-sm font-medium">
+      {children}
+    </label>
   );
 };
 
