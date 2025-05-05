@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Place, PlaceCategory, PlaceAction, BrokerInfo, DelivererInfo } from '@/components/Map/MapMarker';
 import { Button } from '@/components/ui/button';
@@ -6,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { MapPin, Star, DollarSign, SquareFeet, Briefcase, Truck } from 'lucide-react';
+import { MapPin, Star, DollarSign, ArrowDown, Briefcase, Truck } from 'lucide-react';
 
 interface PlaceFormProps {
   initialData?: Partial<Place>;
@@ -243,7 +242,7 @@ const PlaceForm = ({ initialData, onSubmit }: PlaceFormProps) => {
           <div className="space-y-2">
             <Label htmlFor="area">
               <div className="flex items-center">
-                <SquareFeet className="h-4 w-4 mr-1" />
+                <ArrowDown className="h-4 w-4 mr-1 rotate-45" />
                 <span>Area (m²)</span>
               </div>
             </Label>
