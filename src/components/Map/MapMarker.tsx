@@ -1,4 +1,10 @@
 
+import { Marker, Popup } from 'react-leaflet';
+import { Icon, PointTuple } from 'leaflet';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Calendar, MapPin, Users, DollarSign, Square, Briefcase, Truck } from 'lucide-react';
+
 export interface Location {
   lat: number;
   lng: number;
@@ -12,10 +18,10 @@ export interface BrokerInfo {
   phone?: string;
   email?: string;
   company?: string;
-  rating?: number; // Add rating property
-  id?: string; // Add id property
-  photoUrl?: string; // Add photoUrl property
-  commissionsRate?: number; // Add commissionsRate property
+  rating?: number;
+  id?: string;
+  photoUrl?: string;
+  commissionsRate?: number;
 }
 
 export interface DelivererInfo {
@@ -23,17 +29,21 @@ export interface DelivererInfo {
   phone?: string;
   vehicle?: string;
   deliveryTime?: string;
-  rating?: number; // Add rating property
-  id?: string; // Add id property
-  photoUrl?: string; // Add photoUrl property
-  deliveryFee?: number; // Add deliveryFee property
-  deliveryArea?: string; // Add deliveryArea property
+  rating?: number;
+  id?: string;
+  photoUrl?: string;
+  deliveryFee?: number;
+  deliveryArea?: string;
 }
 
 export interface User {
   id: string;
   email: string;
   name?: string;
+  photoUrl?: string;
+  hobbies?: string[];
+  friends?: string[];
+  location?: Location;
 }
 
 export type EventType = 'sports' | 'music' | 'food' | 'tech' | 'arts' | 'other';
@@ -57,6 +67,8 @@ export interface Event {
   placeId?: string;
   photos?: string[];
   liveQueue?: number;
+  createdBy?: string; // User ID of event creator
+  attendeesList?: string[]; // List of user IDs who are attending
 }
 
 export interface Place {
@@ -85,21 +97,14 @@ export interface Place {
 
 export type MapMarkerItem = Event | Place;
 
-// Create a MapMarker component with a default export
-import { Marker, Popup } from 'react-leaflet';
-import { Icon } from 'leaflet';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Calendar, MapPin, Users, DollarSign, Square, Briefcase, Truck } from 'lucide-react';
-
 // Helper function to determine marker icon based on item type
 const getMarkerIcon = (item: MapMarkerItem, isSelected: boolean = false): Icon => {
   // Default icon properties
   const iconOptions = {
     iconUrl: '',
-    iconSize: [25, 25],
-    iconAnchor: [12, 12],
-    popupAnchor: [1, -10],
+    iconSize: [25, 25] as PointTuple,
+    iconAnchor: [12, 12] as PointTuple,
+    popupAnchor: [1, -10] as PointTuple,
     className: isSelected ? 'selected-marker' : ''
   };
   

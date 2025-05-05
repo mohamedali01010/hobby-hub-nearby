@@ -5,13 +5,13 @@ import { Icon } from 'leaflet';
 import L from 'leaflet';
 import { useNavigate } from 'react-router-dom';
 import { useGeolocation } from '@/hooks/useGeolocation';
-import MapMarker, { Event, Place, MapMarkerItem } from './MapMarker';
+import MapMarker, { Event, Place, MapMarkerItem, Location } from './MapMarker';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle, DialogHeader } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import PlaceForm from '@/components/Places/PlaceForm';
-import { PlusCircle, Map as MapIcon, Locate } from 'lucide-react';
+import { PlusCircle, Map as MapIcon, Locate, Target, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 // Helper functions
@@ -76,17 +76,29 @@ const AreaSelector = ({
   enabled, 
   position, 
   radius, 
-  onSelectComplete 
+  onSelectComplete,
+  onRadiusChange
 }: { 
   enabled: boolean; 
   position: [number, number] | null; 
   radius: number;
-  onSelectComplete: () => void;
+  onSelectComplete: (center: [number, number], radius: number) => void;
+  onRadiusChange: (radius: number) => void;
 }) => {
   const map = useMapEvents({
     click: (e) => {
-      if (enabled && position === null) {
-        onSelectComplete();
+      if (enabled && position) {
+        // If we already have a position and click again, complete the selection
+        onSelectComplete(position, radius);
+      }
+    },
+    mousemove: (e) => {
+      if (enabled && position) {
+        // Calculate distance from center to mouse position
+        const center = L.latLng(position[0], position[1]);
+        const mousePoint = e.latlng;
+        const newRadius = center.distanceTo(mousePoint);
+        onRadiusChange(newRadius);
       }
     }
   });
@@ -113,7 +125,7 @@ const MapClickHandler = ({
   onAreaSelect: (center: [number, number], radius: number) => void;
 }) => {
   const [areaPosition, setAreaPosition] = useState<[number, number] | null>(null);
-  const [areaRadius, setAreaRadius] = useState(500); // Default radius in meters
+  const [areaRadius, setAreaRadius] = useState(1000); // Default radius in meters
   
   const map = useMapEvents({
     click: (e) => {
@@ -121,32 +133,30 @@ const MapClickHandler = ({
         if (!areaPosition) {
           setAreaPosition([e.latlng.lat, e.latlng.lng]);
         } else {
-          // Calculate distance from center to clicked point
-          const center = L.latLng(areaPosition[0], areaPosition[1]);
-          const clickedPoint = e.latlng;
-          const newRadius = center.distanceTo(clickedPoint);
-          
-          setAreaRadius(newRadius);
-          onAreaSelect(areaPosition, newRadius);
-          setAreaPosition(null); // Reset for next selection
+          // We'll handle this through the AreaSelector component
         }
       } else {
         onMapClick(e.latlng.lat, e.latlng.lng);
       }
     }
   });
+  
+  const handleRadiusChange = (newRadius: number) => {
+    setAreaRadius(newRadius);
+  };
+  
+  const handleAreaSelectComplete = (center: [number, number], radius: number) => {
+    onAreaSelect(center, radius);
+    setAreaPosition(null);
+  };
 
   return (
     <AreaSelector 
       enabled={areaSelectMode} 
       position={areaPosition} 
       radius={areaRadius}
-      onSelectComplete={() => {
-        if (areaPosition) {
-          onAreaSelect(areaPosition, areaRadius);
-          setAreaPosition(null);
-        }
-      }}
+      onSelectComplete={handleAreaSelectComplete}
+      onRadiusChange={handleRadiusChange}
     />
   );
 };
@@ -179,6 +189,7 @@ export interface MapViewProps {
   filterDelivererRating?: number;
   onPlaceCreate?: (place: Place) => void;
   onEventCreate?: (event: Event) => void;
+  onAreaSelect?: (lat: number, lng: number, radius: number) => void;
 }
 
 interface EventFormData {
@@ -212,7 +223,8 @@ const MapView = ({
   filterBrokerRating,
   filterDelivererRating,
   onPlaceCreate,
-  onEventCreate
+  onEventCreate,
+  onAreaSelect
 }: MapViewProps) => {
   const { location, error } = useGeolocation();
   const [selectedItem, setSelectedItem] = useState<MapMarkerItem | null>(null);
@@ -234,7 +246,7 @@ const MapView = ({
   const [selectedArea, setSelectedArea] = useState<{center: [number, number], radius: number} | null>(null);
 
   // State for creating new markers
-  const [newMarkerLocation, setNewMarkerLocation] = useState<NewLocationData | null>(null);
+  const [newMarkerLocation, setNewMarkerLocation] = useState<Location | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [createDialogTab, setCreateDialogTab] = useState('place');
   
@@ -372,9 +384,13 @@ const MapView = ({
     setSelectedArea({ center, radius });
     setAreaSelectMode(false);
     
+    if (onAreaSelect) {
+      onAreaSelect(center[0], center[1], radius);
+    }
+    
     toast({
       title: "Area Selected",
-      description: `Selected area with radius of ${Math.round(radius)}m`,
+      description: `Selected area with radius of ${Math.round(radius/1000)}km`,
     });
   };
 
@@ -402,6 +418,7 @@ const MapView = ({
         ...eventData,
         id: `event-${Date.now()}`,
         location: newMarkerLocation,
+        eventType: eventData.hobbyType || 'other', // Ensure eventType is set
       };
       onEventCreate(newEvent);
       setCreateDialogOpen(false);
@@ -568,19 +585,33 @@ const MapView = ({
               className="w-full flex items-center gap-2"
               onClick={() => setAreaSelectMode(!areaSelectMode)}
             >
-              <MapIcon className="h-4 w-4" />
-              {areaSelectMode ? "Cancel Selection" : "Select Area"}
+              {areaSelectMode ? (
+                <>
+                  <X className="h-4 w-4" />
+                  Cancel Selection
+                </>
+              ) : (
+                <>
+                  <Target className="h-4 w-4" />
+                  Select Area
+                </>
+              )}
             </Button>
             
             {selectedArea && (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="w-full"
-                onClick={() => setSelectedArea(null)}
-              >
-                Clear Area Filter
-              </Button>
+              <div className="text-xs p-2 bg-blue-50 rounded">
+                <div className="flex items-center justify-between">
+                  <span>Area: {Math.round(selectedArea.radius/1000)}km radius</span>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-6 p-0 w-6"
+                    onClick={() => setSelectedArea(null)}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              </div>
             )}
             
             <Button 

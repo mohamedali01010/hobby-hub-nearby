@@ -4,13 +4,15 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar, MapPin, Filter, Plus, Users, Clock } from 'lucide-react';
+import { Calendar, MapPin, Filter, Plus, Users, Clock, UserCircle2, Heart, Sparkles, MapIcon, Target } from 'lucide-react';
 import Navbar from '@/components/UI/Navbar';
 import MapView from '@/components/Map/MapView';
-import { Event, MapMarkerItem, Place } from '@/components/Map/MapMarker';
+import { Event, MapMarkerItem, Place, User } from '@/components/Map/MapMarker';
 import { useToast } from '@/components/ui/use-toast';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/context/AuthContext';
+import { useEvents } from '@/context/EventContext';
 
 // Sample events data
 const sampleEvents: Event[] = [
@@ -23,7 +25,7 @@ const sampleEvents: Event[] = [
     hobbyType: 'sports',
     date: new Date(Date.now() + 86400000).toISOString(), // Tomorrow
     attendees: 12,
-    eventType: 'football',
+    eventType: 'sports',
     isEnhanced: true,
   },
   {
@@ -35,7 +37,7 @@ const sampleEvents: Event[] = [
     hobbyType: 'sports',
     date: new Date(Date.now() + 2 * 86400000).toISOString(), // Day after tomorrow
     attendees: 8,
-    eventType: 'swimming',
+    eventType: 'sports',
   },
   {
     id: '3',
@@ -46,6 +48,7 @@ const sampleEvents: Event[] = [
     hobbyType: 'arts',
     date: new Date(Date.now() + 3 * 86400000).toISOString(),
     attendees: 25,
+    eventType: 'arts',
   },
   {
     id: '4',
@@ -56,6 +59,7 @@ const sampleEvents: Event[] = [
     hobbyType: 'tech',
     date: new Date(Date.now() + 7 * 86400000).toISOString(),
     attendees: 40,
+    eventType: 'tech',
   },
   {
     id: '5',
@@ -66,6 +70,7 @@ const sampleEvents: Event[] = [
     hobbyType: 'food',
     date: new Date(Date.now() + 5 * 86400000).toISOString(),
     attendees: 15,
+    eventType: 'food',
   },
   // Add more events at the same location to test clustering
   {
@@ -77,6 +82,7 @@ const sampleEvents: Event[] = [
     hobbyType: 'sports',
     date: new Date(Date.now() + 1 * 86400000).toISOString(),
     attendees: 20,
+    eventType: 'sports',
   },
   {
     id: '7',
@@ -87,6 +93,7 @@ const sampleEvents: Event[] = [
     hobbyType: 'arts',
     date: new Date(Date.now() + 4 * 86400000).toISOString(),
     attendees: 12,
+    eventType: 'arts',
   },
   {
     id: '8',
@@ -97,6 +104,7 @@ const sampleEvents: Event[] = [
     hobbyType: 'other',
     date: new Date(Date.now() + 10 * 86400000).toISOString(),
     attendees: 32,
+    eventType: 'other',
   },
 ];
 
@@ -135,8 +143,8 @@ const sampleQueuePlaces: Place[] = [
     title: 'Popular Café',
     description: 'Trendy café known for its specialty coffee.',
     location: { lat: 51.505, lng: -0.11, buildingName: 'Main Street Corner' },
-    type: 'restaurant',
-    category: 'restaurant',
+    type: 'cafe',
+    category: 'cafe',
     isOwner: false,
     liveQueue: {
       count: 8,
@@ -162,7 +170,7 @@ const sampleMultiEventPlaces: Place[] = [
         title: 'Swimming Lessons',
         hobby: 'Swimming',
         hobbyType: 'sports',
-        eventType: 'swimming',
+        eventType: 'sports',
         date: new Date(Date.now() + 1 * 86400000).toISOString(),
         attendees: 15
       },
@@ -171,6 +179,7 @@ const sampleMultiEventPlaces: Place[] = [
         title: 'Basketball Tournament',
         hobby: 'Basketball',
         hobbyType: 'sports',
+        eventType: 'sports',
         date: new Date(Date.now() + 3 * 86400000).toISOString(),
         attendees: 30
       },
@@ -179,6 +188,7 @@ const sampleMultiEventPlaces: Place[] = [
         title: 'Yoga Class',
         hobby: 'Yoga',
         hobbyType: 'sports',
+        eventType: 'sports',
         date: new Date(Date.now() + 2 * 86400000).toISOString(),
         attendees: 20
       },
@@ -187,6 +197,7 @@ const sampleMultiEventPlaces: Place[] = [
         title: 'Fitness Workshop',
         hobby: 'Fitness',
         hobbyType: 'sports',
+        eventType: 'sports',
         date: new Date(Date.now() + 5 * 86400000).toISOString(),
         attendees: 25
       },
@@ -195,6 +206,7 @@ const sampleMultiEventPlaces: Place[] = [
         title: 'Dance Competition',
         hobby: 'Dance',
         hobbyType: 'arts',
+        eventType: 'arts',
         date: new Date(Date.now() + 7 * 86400000).toISOString(),
         attendees: 40
       }
@@ -213,6 +225,7 @@ const sampleMultiEventPlaces: Place[] = [
         title: 'Art Workshop',
         hobby: 'Art',
         hobbyType: 'arts',
+        eventType: 'arts',
         date: new Date(Date.now() + 2 * 86400000).toISOString(),
         attendees: 18
       },
@@ -221,6 +234,7 @@ const sampleMultiEventPlaces: Place[] = [
         title: 'Chess Club',
         hobby: 'Chess',
         hobbyType: 'other',
+        eventType: 'other',
         date: new Date(Date.now() + 4 * 86400000).toISOString(),
         attendees: 12
       },
@@ -229,6 +243,7 @@ const sampleMultiEventPlaces: Place[] = [
         title: 'Computer Skills Class',
         hobby: 'Technology',
         hobbyType: 'tech',
+        eventType: 'tech',
         date: new Date(Date.now() + 1 * 86400000).toISOString(),
         attendees: 15
       }
@@ -237,16 +252,27 @@ const sampleMultiEventPlaces: Place[] = [
 ];
 
 const Events = () => {
-  const [events, setEvents] = useState<Event[]>(sampleEvents);
+  const { user } = useAuth();
+  const eventsContext = useEvents();
+  const [events, setEvents] = useState<Event[]>(eventsContext?.allEvents || sampleEvents);
   const [places, setPlaces] = useState<Place[]>([...sampleQueuePlaces, ...sampleMultiEventPlaces]);
   const [selectedEvent, setSelectedEvent] = useState<string | null>(null);
   const [selectedPlace, setSelectedPlace] = useState<string | null>(null);
   const [selectedHobby, setSelectedHobby] = useState<string>('All');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedPlaceEvents, setSelectedPlaceEvents] = useState<Event[]>([]);
-  const [viewMode, setViewMode] = useState<'all' | 'upcoming' | 'live'>('all');
+  const [viewMode, setViewMode] = useState<'all' | 'upcoming' | 'live' | 'friends' | 'recommended'>('all');
+  const [isAreaFilterActive, setIsAreaFilterActive] = useState(false);
+  const [selectedArea, setSelectedArea] = useState<{lat: number, lng: number, radius: number} | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  // Update events from context when available
+  useEffect(() => {
+    if (eventsContext?.allEvents.length) {
+      setEvents(eventsContext.allEvents);
+    }
+  }, [eventsContext?.allEvents]);
 
   const handleMarkerClick = (item: MapMarkerItem) => {
     if ('hobby' in item) {
@@ -261,7 +287,7 @@ const Events = () => {
           ...event,
           location: item.location,
           description: `Event at ${item.title}`
-        }));
+        }) as Event); // Type assertion since we're adding all required fields
         setSelectedPlaceEvents(hostedEventsWithLocation);
         setDialogOpen(true);
       }
@@ -284,25 +310,95 @@ const Events = () => {
     });
   };
 
-  // Filter events based on selected hobby and view mode
-  const filteredEvents = events.filter(event => {
-    // Filter by hobby
-    if (selectedHobby !== 'All' && event.hobby !== selectedHobby) {
-      return false;
+  // Handle area selection on the map
+  const handleAreaSelect = (lat: number, lng: number, radius: number) => {
+    setSelectedArea({ lat, lng, radius });
+    setIsAreaFilterActive(true);
+    
+    // Filter events in the selected area
+    if (eventsContext) {
+      eventsContext.selectAreaEvents(lat, lng, radius);
+    } else {
+      // Fallback if context is not available
+      const filteredEvents = events.filter(event => {
+        const distance = calculateDistance(lat, lng, event.location.lat, event.location.lng);
+        return distance <= radius / 1000; // Convert meters to km
+      });
+      setEvents(filteredEvents);
     }
+    
+    toast({
+      title: "Area Selected",
+      description: `Showing events within ${Math.round(radius/1000)}km of selected point`,
+    });
+  };
 
-    // Filter by view mode
-    const eventDate = new Date(event.date);
-    const now = new Date();
+  // Clear area filter
+  const handleClearAreaFilter = () => {
+    setSelectedArea(null);
+    setIsAreaFilterActive(false);
     
-    if (viewMode === 'upcoming') {
-      // Only show events in the future
-      return eventDate > now;
+    if (eventsContext) {
+      eventsContext.clearAreaFilter();
+    } else {
+      // Fallback if context is not available
+      setEvents(sampleEvents);
+    }
+  };
+
+  // Calculate distance between two points for filtering
+  const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
+    const R = 6371; // Earth's radius in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lng2 - lng1) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  };
+
+  // Filter events based on selected hobby, view mode, and area filter
+  const getFilteredEvents = () => {
+    // Start with the correct set of events based on view mode
+    let filtered: Event[] = [];
+    
+    if (eventsContext) {
+      switch (viewMode) {
+        case 'friends':
+          filtered = eventsContext.friendEvents;
+          break;
+        case 'recommended':
+          filtered = eventsContext.getPersonalizedEvents();
+          break;
+        case 'live':
+          filtered = eventsContext.allEvents.filter(e => e.isLive);
+          break;
+        case 'upcoming':
+          const now = new Date();
+          filtered = eventsContext.allEvents.filter(e => new Date(e.date) > now);
+          break;
+        default:
+          filtered = isAreaFilterActive && selectedArea 
+            ? eventsContext.getEventsInArea(selectedArea.lat, selectedArea.lng, selectedArea.radius) 
+            : eventsContext.allEvents;
+      }
+    } else {
+      // Fallback without context
+      filtered = events;
     }
     
-    // For 'all' mode, show all events
-    return true;
-  });
+    // Apply hobby filter
+    if (selectedHobby !== 'All') {
+      filtered = filtered.filter(event => event.hobby === selectedHobby);
+    }
+    
+    return filtered;
+  };
+
+  // Get the filtered events to display
+  const filteredEvents = getFilteredEvents();
 
   // Get unique hobbies for the filter
   const uniqueHobbies = Array.from(new Set(events.map(event => event.hobby)));
@@ -324,8 +420,6 @@ const Events = () => {
             <Button 
               size="sm"
               onClick={() => {
-                // In a real app, you might navigate to an event creation page
-                // or open a creation dialog
                 toast({
                   title: "Create Event",
                   description: "Click on the map to create a new event.",
@@ -339,15 +433,46 @@ const Events = () => {
           {/* View Mode Tabs */}
           <Tabs 
             defaultValue={viewMode} 
-            onValueChange={(value) => setViewMode(value as 'all' | 'upcoming' | 'live')}
+            onValueChange={(value) => setViewMode(value as 'all' | 'upcoming' | 'live' | 'friends' | 'recommended')}
             className="mb-4"
           >
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="all">All</TabsTrigger>
               <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
-              <TabsTrigger value="live">Live Queues</TabsTrigger>
+              <TabsTrigger value="live">Live</TabsTrigger>
+              <TabsTrigger value="friends">
+                <UserCircle2 className="h-4 w-4 mr-1" />
+                <span className="hidden sm:inline">Friends</span>
+              </TabsTrigger>
+              <TabsTrigger value="recommended">
+                <Sparkles className="h-4 w-4 mr-1" />
+                <span className="hidden sm:inline">For You</span>
+              </TabsTrigger>
             </TabsList>
           </Tabs>
+
+          {/* Area filter indicator */}
+          {isAreaFilterActive && selectedArea && (
+            <div className="mb-4 p-2 bg-blue-50 border border-blue-200 rounded-md">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <Target className="h-4 w-4 mr-2 text-blue-500" />
+                  <span className="text-sm font-medium">Area Filter Active</span>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-6 px-2" 
+                  onClick={handleClearAreaFilter}
+                >
+                  Clear
+                </Button>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Showing events within {Math.round(selectedArea.radius/1000)}km radius
+              </p>
+            </div>
+          )}
           
           {viewMode !== 'live' ? (
             <>
@@ -389,6 +514,7 @@ const Events = () => {
                       onClick={() => {
                         setSelectedHobby('All');
                         setViewMode('all');
+                        handleClearAreaFilter();
                       }}
                     >
                       View all events
@@ -535,6 +661,7 @@ const Events = () => {
             filterHobby={selectedHobby !== 'All' ? selectedHobby : undefined}
             onEventCreate={handleCreateEvent}
             onPlaceCreate={handleCreatePlace}
+            onAreaSelect={handleAreaSelect}
           />
           
           {/* Selected Event Card - Overlay on map */}
@@ -617,7 +744,6 @@ const Events = () => {
                     <Button 
                       size="sm"
                       onClick={() => {
-                        // In a real app, this would navigate to the event details
                         toast({
                           title: "Join event",
                           description: `You have joined ${event.title}`,
