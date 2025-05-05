@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -850,4 +851,94 @@ const Dashboard = () => {
               <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
                 <h1 className="text-2xl font-bold mb-4 md:mb-0">Events</h1>
                 
-                <div className="flex flex-col md:
+                <div className="flex flex-col md:flex-row gap-2">
+                  <div className="relative w-full md:w-64">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      type="search"
+                      placeholder="Search events..."
+                      className="pl-8"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                  </div>
+                  
+                  <Button variant="outline" size="icon">
+                    <Filter className="h-4 w-4" />
+                  </Button>
+                  
+                  <Button>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Create Event
+                  </Button>
+                </div>
+              </div>
+              
+              <div className="flex flex-wrap gap-2 mb-6">
+                {sampleHobbies.map((hobby) => (
+                  <Badge 
+                    key={hobby.id}
+                    variant={selectedHobby === hobby.id ? "default" : "outline"}
+                    className="cursor-pointer"
+                    onClick={() => handleHobbyFilter(hobby.id)}
+                  >
+                    {hobby.name} ({hobby.count})
+                  </Badge>
+                ))}
+              </div>
+              
+              <div className="mb-8">
+                <h2 className="text-lg font-semibold mb-4">Upcoming Events</h2>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredEvents.map((event) => (
+                    <Card key={event.id} className="cursor-pointer hover:border-primary transition-colors" onClick={() => handleEventClick(event)}>
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <h3 className="font-medium">{event.title}</h3>
+                            <div className="flex items-center text-sm text-muted-foreground mt-1">
+                              <Calendar className="mr-1 h-4 w-4" />
+                              <span>{formatDate(event.date)}</span>
+                            </div>
+                          </div>
+                          <Badge>{event.hobby}</Badge>
+                        </div>
+                        
+                        <div className="mt-2 text-sm text-muted-foreground line-clamp-2">
+                          {event.description}
+                        </div>
+                        
+                        <div className="mt-3 flex items-center justify-between">
+                          <div className="flex items-center text-sm">
+                            <Users className="mr-1 h-4 w-4" />
+                            <span>{event.attendees} attending</span>
+                          </div>
+                          
+                          <div className="flex items-center gap-2">
+                            {event.isLive && event.liveViewers !== undefined && (
+                              <div className="flex items-center text-sm text-red-500">
+                                <Eye className="mr-1 h-4 w-4" />
+                                <span>{event.liveViewers} watching</span>
+                              </div>
+                            )}
+                            
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <Heart className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </main>
+      </div>
+    </div>
+  );
+};
+
+export default Dashboard;
